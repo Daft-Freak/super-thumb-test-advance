@@ -139,7 +139,7 @@ bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
             code_buf[9] = 0xBD00; // pop pc
 
-            out = func(tests[i].psr_in | psr_save, tests[i].m_in, (intptr_t)set_cpsr_arm, (intptr_t)get_cpsr_arm);
+            out = func(tests[i].psr_in | psr_save, tests[i].m_in, (intptr_t)set_cpsr_arm, 0x3BAD);
 
             if(out != !!(tests[i].psr_out & flags[j])) {
                 res = false;
