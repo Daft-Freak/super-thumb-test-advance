@@ -17,8 +17,25 @@ struct TestInfo {
 
 static const struct TestInfo tests[] = {
     {OP(0,  0, 1, 0), 0x55555555, 0x55555555}, // LSL 0
+    {OP(0,  0, 1, 0), 0xAAAAAAAA, 0xAAAAAAAA}, // LSL 0
     {OP(0,  1, 1, 0), 0x55555555, 0xAAAAAAAA}, // LSL 1
+    {OP(0,  1, 1, 0), 0xAAAAAAAA, 0x55555554}, // LSL 1
     {OP(0, 31, 1, 0), 0x55555555, 0x80000000}, // LSL 31
+    {OP(0, 31, 1, 0), 0xAAAAAAAA, 0x00000000}, // LSL 31
+
+    {OP(1,  0, 1, 0), 0x55555555, 0x00000000}, // LSR 0 (32)
+    {OP(1,  0, 1, 0), 0xAAAAAAAA, 0x00000000}, // LSR 0 (32)
+    {OP(1,  1, 1, 0), 0x55555555, 0x2AAAAAAA}, // LSR 1
+    {OP(1,  1, 1, 0), 0xAAAAAAAA, 0x55555555}, // LSR 1
+    {OP(1, 31, 1, 0), 0x55555555, 0x00000000}, // LSR 31
+    {OP(1, 31, 1, 0), 0xAAAAAAAA, 0x00000001}, // LSR 31
+
+    {OP(2,  0, 1, 0), 0x55555555, 0x00000000}, // ASR 0 (32)
+    {OP(2,  0, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF}, // ASR 0 (32)
+    {OP(2,  1, 1, 0), 0x55555555, 0x2AAAAAAA}, // ASR 1
+    {OP(2,  1, 1, 0), 0xAAAAAAAA, 0xD5555555}, // ASR 1
+    {OP(2, 31, 1, 0), 0x55555555, 0x00000000}, // ASR 31
+    {OP(2, 31, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF}, // ASR 31
 };
 
 #undef OP
