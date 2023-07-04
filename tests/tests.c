@@ -2,7 +2,7 @@
 
 typedef uint32_t (*TestFunc)(uint32_t, uint32_t, uint32_t, uint32_t);
 
-static _Alignas(4) uint16_t code_buf[8];
+static _Alignas(4) uint16_t code_buf[16];
 
 #define FLAG_V (1 << 28)
 #define FLAG_C (1 << 29)
@@ -122,6 +122,31 @@ bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
             res = false;
             fail_cb(i, out, tests[i].psr_out);
         }
+
+        // single flag tests
+        // (to try and break my recompiler)
+        for(int j = 0; j < 4; j++) {
+            // Z C N V
+            static const uint32_t flags[] = {FLAG_Z, FLAG_C, FLAG_N, FLAG_V};
+
+            code_buf[4] = 0xD001 | (j << 9); // Bcc +4
+            // flag not set
+            code_buf[5] = 0x1A00; // sub r0 r0 r0
+            code_buf[6] = 0xE001; // B + 4
+            // flag set
+            code_buf[7] = 0x1A00; // sub r0 r0 r0
+            code_buf[8] = 0x3001; // add r0 1
+
+            code_buf[9] = 0xBD00; // pop pc
+
+            out = func(tests[i].psr_in | psr_save, tests[i].m_in, (intptr_t)set_cpsr_arm, (intptr_t)get_cpsr_arm);
+
+            if(out != !!(tests[i].psr_out & flags[j])) {
+                res = false;
+                fail_cb(i, out, tests[i].psr_out & flags[j]);
+            }
+        }
+
     }
 
     return res;
