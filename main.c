@@ -30,7 +30,7 @@ static void load_font() {
 static void clear_text() {
     // clear char block 2
     uint16_t zero = 0;
-    biosCpuSet(&zero, MAP_BASE_ADDR(2), CS_SRC_FIXED | (0x800 / 4));
+    biosCpuSet(&zero, MAP_BASE_ADDR(2), CS_SRC_FIXED | CS_32BIT | (0x800 / 4));
 }
 
 static void write_text_pos(int x, int y, const char *text) {
@@ -51,7 +51,7 @@ static void write_text(const char *text) {
                 // scroll
                 // using actual scrolling would be more efficient, but it really doesn't matter here
                 for(int y = 0; y < 20; y++)
-                    biosCpuSet(MAP_BASE_ADDR(2) + (y + 1) * 64, MAP_BASE_ADDR(2) + y * 64, 64 / 4);
+                    biosCpuSet(MAP_BASE_ADDR(2) + (y + 1) * 64, MAP_BASE_ADDR(2) + y * 64, CS_32BIT | (64 / 4));
                 cursor_y--;
             }
         } else if(*text == '\r')
