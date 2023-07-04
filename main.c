@@ -7,6 +7,7 @@
 #include <seven/hw/video.h>
 #include <seven/hw/video/bg_scroll.h>
 #include <seven/hw/video/bg_tiled.h>
+#include <seven/util/log.h>
 
 #include "assets/8x8font.h"
 
@@ -76,6 +77,7 @@ static int log_printf(const char *format, ...) {
     va_end(args);
 
     write_text(buf);
+    logOutput(LOG_WARN, buf);
 
     free(buf);
     return ret;
@@ -87,6 +89,9 @@ int main() {
     REG_BG0CNT = BG_MAP_BASE(2) | BG_GFX_BASE(0) | BG_SIZE_256X256;
     REG_BG0HOFS = 0;
     REG_BG0VOFS = 0;
+
+    logInit();
+    logSetMaxLevel(LOG_INFO);
 
     // enable irq/vblank
     irqInitDefault();
