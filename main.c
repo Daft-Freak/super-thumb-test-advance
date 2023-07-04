@@ -83,7 +83,14 @@ static int log_printf(const char *format, ...) {
 
     free(buf);
     return ret;
-  }
+}
+
+static void new_test_group(const char *label) {
+    log_printf("%s ", label);
+}
+static void test_failed(int i, uint32_t val, uint32_t expected) {
+    log_printf("\n%i: %x != %x\n", i, val, expected);
+}
 
 int main() {
     REG_DISPCNT = VIDEO_MODE_REGULAR | VIDEO_BG0_ENABLE;
@@ -105,7 +112,7 @@ int main() {
 
     log_printf("Starting...\n");
 
-    if(run_tests())
+    if(run_tests(new_test_group, test_failed))
         log_printf("\nSuccess!\n");
 
     while(true) {
