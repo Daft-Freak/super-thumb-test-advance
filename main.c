@@ -11,6 +11,8 @@
 
 #include "assets/8x8font.h"
 
+#include "tests/tests.h"
+
 static int cursor_x = 0, cursor_y = 0;
 
 static void load_font() {
@@ -101,7 +103,10 @@ int main() {
     load_font();
     clear_text();
 
-    write_text("Hello!\n\n");
+    log_printf("Starting...\n");
+
+    if(run_tests())
+        log_printf("\nSuccess!\n");
 
     while(true) {
         biosVBlankIntrWait();

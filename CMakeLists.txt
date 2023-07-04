@@ -7,7 +7,10 @@ project(thumb-test-gba C)
 
 gba_add_library_subdirectory(rom seven)
 
-add_executable(thumb-test main.c)
+add_executable(thumb-test
+    main.c
+    tests/tests.c
+)
 set_target_properties(thumb-test PROPERTIES SUFFIX ".elf")
 
 target_compile_options(thumb-test PRIVATE -ffunction-sections -fdata-sections -mthumb)
