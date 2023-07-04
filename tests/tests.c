@@ -1,8 +1,15 @@
 #include "tests.h"
 
-typedef uint32_t (*TestFunc)(uint32_t, uint32_t);
+typedef uint32_t (*TestFunc)(uint32_t, uint32_t, uint32_t, uint32_t);
 
-static uint16_t code_buf[8];
+static _Alignas(4) uint16_t code_buf[8];
+
+#define FLAG_V (1 << 28)
+#define FLAG_C (1 << 29)
+#define FLAG_Z (1 << 30)
+#define FLAG_N (1 << 31)
+
+#define PSR_MASK 0xF0000000
 
 // test list
 struct TestInfo {
@@ -11,36 +18,66 @@ struct TestInfo {
     uint32_t m_in;
 
     uint32_t d_out;
+
+    uint32_t psr_in, psr_out;
 };
 
 #define OP(op, imm, rm, rd) (op << 11 | imm << 6 | rm << 3 | rd)
 
 static const struct TestInfo tests[] = {
-    {OP(0,  0, 1, 0), 0x55555555, 0x55555555}, // LSL 0
-    {OP(0,  0, 1, 0), 0xAAAAAAAA, 0xAAAAAAAA}, // LSL 0
-    {OP(0,  1, 1, 0), 0x55555555, 0xAAAAAAAA}, // LSL 1
-    {OP(0,  1, 1, 0), 0xAAAAAAAA, 0x55555554}, // LSL 1
-    {OP(0, 31, 1, 0), 0x55555555, 0x80000000}, // LSL 31
-    {OP(0, 31, 1, 0), 0xAAAAAAAA, 0x00000000}, // LSL 31
+    // setting flag bits to make sure they get cleared
+    {OP(0,  0, 1, 0), 0x55555555, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // LSL 0
+    {OP(0,  0, 1, 0), 0xAAAAAAAA, 0xAAAAAAAA, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N}, // LSL 0
+    {OP(0,  1, 1, 0), 0x55555555, 0xAAAAAAAA, FLAG_C | FLAG_Z, FLAG_N                  }, // LSL 1
+    {OP(0,  1, 1, 0), 0xAAAAAAAA, 0x55555554, FLAG_Z | FLAG_N, FLAG_C                  }, // LSL 1
+    {OP(0, 31, 1, 0), 0x55555555, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  }, // LSL 31
+    {OP(0, 31, 1, 0), 0xAAAAAAAA, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // LSL 31
 
-    {OP(1,  0, 1, 0), 0x55555555, 0x00000000}, // LSR 0 (32)
-    {OP(1,  0, 1, 0), 0xAAAAAAAA, 0x00000000}, // LSR 0 (32)
-    {OP(1,  1, 1, 0), 0x55555555, 0x2AAAAAAA}, // LSR 1
-    {OP(1,  1, 1, 0), 0xAAAAAAAA, 0x55555555}, // LSR 1
-    {OP(1, 31, 1, 0), 0x55555555, 0x00000000}, // LSR 31
-    {OP(1, 31, 1, 0), 0xAAAAAAAA, 0x00000001}, // LSR 31
+    {OP(1,  0, 1, 0), 0x55555555, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  }, // LSR 0 (32)
+    {OP(1,  0, 1, 0), 0xAAAAAAAA, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z}, // LSR 0 (32)
+    {OP(1,  1, 1, 0), 0x55555555, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  }, // LSR 1
+    {OP(1,  1, 1, 0), 0xAAAAAAAA, 0x55555555, FLAG_C | FLAG_N, 0                       }, // LSR 1
+    {OP(1, 31, 1, 0), 0x55555555, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // LSR 31
+    {OP(1, 31, 1, 0), 0xAAAAAAAA, 0x00000001, FLAG_Z | FLAG_N, 0                       }, // LSR 31
 
-    {OP(2,  0, 1, 0), 0x55555555, 0x00000000}, // ASR 0 (32)
-    {OP(2,  0, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF}, // ASR 0 (32)
-    {OP(2,  1, 1, 0), 0x55555555, 0x2AAAAAAA}, // ASR 1
-    {OP(2,  1, 1, 0), 0xAAAAAAAA, 0xD5555555}, // ASR 1
-    {OP(2, 31, 1, 0), 0x55555555, 0x00000000}, // ASR 31
-    {OP(2, 31, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF}, // ASR 31
+    {OP(2,  0, 1, 0), 0x55555555, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  }, // ASR 0 (32)
+    {OP(2,  0, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N}, // ASR 0 (32)
+    {OP(2,  1, 1, 0), 0x55555555, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  }, // ASR 1
+    {OP(2,  1, 1, 0), 0xAAAAAAAA, 0xD5555555, FLAG_C | FLAG_Z, FLAG_N                  }, // ASR 1
+    {OP(2, 31, 1, 0), 0x55555555, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // ASR 31
+    {OP(2, 31, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  }, // ASR 31
 };
 
 #undef OP
 
 static const int num_tests = sizeof(tests) / sizeof(tests[0]);
+
+// PSR helpers as we can't access from thumb
+__attribute__((target("arm")))
+static void set_cpsr_arm(uint32_t v) {
+    asm volatile(
+        "msr cpsr, %0"
+        :
+        : "r"(v)
+    );
+}
+
+// needs to be in the same section as the code buffer
+__attribute__((section(".iwram.set_cpsr")))
+void set_cpsr(uint32_t v) {
+    set_cpsr_arm(v);
+}
+
+__attribute__((target("arm")))
+static uint32_t get_cpsr_arm() {
+    uint32_t ret;
+    asm volatile(
+        "mrs %0, cpsr"
+        : "=r"(ret)
+    );
+
+    return ret;
+}
 
 bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
@@ -48,17 +85,42 @@ bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
     group_cb("sh.imm");
 
+    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
+
     for(int i = 0; i < num_tests; i++) {
+        // value test
         code_buf[0] = tests[i].opcode;
         code_buf[1] = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
-        uint32_t out = func(0xBAD, tests[i].m_in);
+        uint32_t out = func(0xBAD, tests[i].m_in, 0x2BAD, 0x3BAD);
 
         if(out != tests[i].d_out) {
             res = false;
             fail_cb(i, out, tests[i].d_out);
+        }
+
+        // flags test
+        // this relies on the PSR helpers not affecting anything other than R0
+        int off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
+
+        code_buf[0] = 0xB500; // push lr
+        code_buf[1] = 0xF000 | ((off >> 12) & 0x7FF); // bl set_cpsr
+        code_buf[2] = 0xF800 | ((off >> 1) & 0x7FF); // bl set_cpsr
+
+        code_buf[3] = tests[i].opcode;
+
+        code_buf[4] = 0xBC01; // pop r0
+        code_buf[5] = 0x4686; // mov lr r0
+        code_buf[6] = 0x4718; // bx r3
+
+        out = func(tests[i].psr_in | psr_save, tests[i].m_in, (intptr_t)set_cpsr_arm, (intptr_t)get_cpsr_arm);
+        out &= PSR_MASK;
+
+        if(out != tests[i].psr_out) {
+            res = false;
+            fail_cb(i, out, tests[i].psr_out);
         }
     }
 
