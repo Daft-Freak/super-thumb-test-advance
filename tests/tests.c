@@ -24,7 +24,7 @@ struct TestInfo {
 
 #define OP(op, imm, rm, rd) (op << 11 | imm << 6 | rm << 3 | rd)
 
-static const struct TestInfo tests[] = {
+static const struct TestInfo shift_imm_tests[] = {
     // setting flag bits to make sure they get cleared
     {OP(0,  0, 1, 0), 0x55555555, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // LSL 0
     {OP(0,  0, 1, 0), 0xAAAAAAAA, 0xAAAAAAAA, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N}, // LSL 0
@@ -50,7 +50,7 @@ static const struct TestInfo tests[] = {
 
 #undef OP
 
-static const int num_tests = sizeof(tests) / sizeof(tests[0]);
+static const int num_shift_imm_tests = sizeof(shift_imm_tests) / sizeof(shift_imm_tests[0]);
 
 // PSR helpers as we can't access from thumb
 __attribute__((target("arm")))
@@ -79,7 +79,7 @@ static uint32_t get_cpsr_arm() {
     return ret;
 }
 
-bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
+bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
     bool res = true;
 
@@ -87,18 +87,18 @@ bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
     uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
 
-    for(int i = 0; i < num_tests; i++) {
+    for(int i = 0; i < num_shift_imm_tests; i++) {
         // value test
-        code_buf[0] = tests[i].opcode;
+        code_buf[0] = shift_imm_tests[i].opcode;
         code_buf[1] = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
-        uint32_t out = func(0xBAD, tests[i].m_in, 0x2BAD, 0x3BAD);
+        uint32_t out = func(0xBAD, shift_imm_tests[i].m_in, 0x2BAD, 0x3BAD);
 
-        if(out != tests[i].d_out) {
+        if(out != shift_imm_tests[i].d_out) {
             res = false;
-            fail_cb(i, out, tests[i].d_out);
+            fail_cb(i, out, shift_imm_tests[i].d_out);
         }
 
         // flags test
@@ -109,18 +109,18 @@ bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
         code_buf[1] = 0xF000 | ((off >> 12) & 0x7FF); // bl set_cpsr
         code_buf[2] = 0xF800 | ((off >> 1) & 0x7FF); // bl set_cpsr
 
-        code_buf[3] = tests[i].opcode;
+        code_buf[3] = shift_imm_tests[i].opcode;
 
         code_buf[4] = 0xBC01; // pop r0
         code_buf[5] = 0x4686; // mov lr r0
         code_buf[6] = 0x4718; // bx r3
 
-        out = func(tests[i].psr_in | psr_save, tests[i].m_in, (intptr_t)set_cpsr_arm, (intptr_t)get_cpsr_arm);
+        out = func(shift_imm_tests[i].psr_in | psr_save, shift_imm_tests[i].m_in, (intptr_t)set_cpsr_arm, (intptr_t)get_cpsr_arm);
         out &= PSR_MASK;
 
-        if(out != tests[i].psr_out) {
+        if(out != shift_imm_tests[i].psr_out) {
             res = false;
-            fail_cb(i, out, tests[i].psr_out);
+            fail_cb(i, out, shift_imm_tests[i].psr_out);
         }
 
         // single flag tests
@@ -139,11 +139,11 @@ bool shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
             code_buf[9] = 0xBD00; // pop pc
 
-            out = func(tests[i].psr_in | psr_save, tests[i].m_in, (intptr_t)set_cpsr_arm, 0x3BAD);
+            out = func(shift_imm_tests[i].psr_in | psr_save, shift_imm_tests[i].m_in, (intptr_t)set_cpsr_arm, 0x3BAD);
 
-            if(out != !!(tests[i].psr_out & flags[j])) {
+            if(out != !!(shift_imm_tests[i].psr_out & flags[j])) {
                 res = false;
-                fail_cb(i, out, tests[i].psr_out & flags[j]);
+                fail_cb(i, out, shift_imm_tests[i].psr_out & flags[j]);
             }
         }
 
@@ -156,7 +156,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
 
-    ret = shift_imm_tests(group_cb, fail_cb) && ret;
+    ret = run_shift_imm_tests(group_cb, fail_cb) && ret;
 
     return ret;
 }
