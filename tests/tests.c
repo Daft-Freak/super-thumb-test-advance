@@ -88,17 +88,19 @@ bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
     uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
 
     for(int i = 0; i < num_shift_imm_tests; i++) {
+        const struct TestInfo *test = &shift_imm_tests[i];
+    
         // value test
-        code_buf[0] = shift_imm_tests[i].opcode;
+        code_buf[0] = test->opcode;
         code_buf[1] = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
-        uint32_t out = func(0xBAD, shift_imm_tests[i].m_in, 0x2BAD, 0x3BAD);
+        uint32_t out = func(0xBAD, test->m_in, 0x2BAD, 0x3BAD);
 
-        if(out != shift_imm_tests[i].d_out) {
+        if(out != test->d_out) {
             res = false;
-            fail_cb(i, out, shift_imm_tests[i].d_out);
+            fail_cb(i, out, test->d_out);
         }
 
         // flags test
@@ -109,18 +111,18 @@ bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
         code_buf[1] = 0xF000 | ((off >> 12) & 0x7FF); // bl set_cpsr
         code_buf[2] = 0xF800 | ((off >> 1) & 0x7FF); // bl set_cpsr
 
-        code_buf[3] = shift_imm_tests[i].opcode;
+        code_buf[3] = test->opcode;
 
         code_buf[4] = 0xBC01; // pop r0
         code_buf[5] = 0x4686; // mov lr r0
         code_buf[6] = 0x4718; // bx r3
 
-        out = func(shift_imm_tests[i].psr_in | psr_save, shift_imm_tests[i].m_in, 0x2BAD, (intptr_t)get_cpsr_arm);
+        out = func(test->psr_in | psr_save, test->m_in, 0x2BAD, (intptr_t)get_cpsr_arm);
         out &= PSR_MASK;
 
-        if(out != shift_imm_tests[i].psr_out) {
+        if(out != test->psr_out) {
             res = false;
-            fail_cb(i, out, shift_imm_tests[i].psr_out);
+            fail_cb(i, out, test->psr_out);
         }
 
         // single flag tests
@@ -139,11 +141,11 @@ bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
             code_buf[9] = 0xBD00; // pop pc
 
-            out = func(shift_imm_tests[i].psr_in | psr_save, shift_imm_tests[i].m_in, 0x2BAD, 0x3BAD);
+            out = func(test->psr_in | psr_save, test->m_in, 0x2BAD, 0x3BAD);
 
-            if(out != !!(shift_imm_tests[i].psr_out & flags[j])) {
+            if(out != !!(test->psr_out & flags[j])) {
                 res = false;
-                fail_cb(i, out, shift_imm_tests[i].psr_out & flags[j]);
+                fail_cb(i, out, test->psr_out & flags[j]);
             }
         }
 
