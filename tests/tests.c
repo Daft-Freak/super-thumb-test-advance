@@ -11,11 +11,13 @@ static _Alignas(4) uint16_t code_buf[16];
 
 #define PSR_MASK 0xF0000000
 
+#define NO_SRC2 0x2BAD
+
 // test list
 struct TestInfo {
     uint16_t opcode;
 
-    uint32_t m_in;
+    uint32_t m_in, n_in;
 
     uint32_t d_out;
 
@@ -26,26 +28,26 @@ struct TestInfo {
 
 static const struct TestInfo shift_imm_tests[] = {
     // setting flag bits to make sure they get cleared
-    {OP(0,  0, 1, 0), 0x55555555, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // LSL 0
-    {OP(0,  0, 1, 0), 0xAAAAAAAA, 0xAAAAAAAA, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N}, // LSL 0
-    {OP(0,  1, 1, 0), 0x55555555, 0xAAAAAAAA, FLAG_C | FLAG_Z, FLAG_N                  }, // LSL 1
-    {OP(0,  1, 1, 0), 0xAAAAAAAA, 0x55555554, FLAG_Z | FLAG_N, FLAG_C                  }, // LSL 1
-    {OP(0, 31, 1, 0), 0x55555555, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  }, // LSL 31
-    {OP(0, 31, 1, 0), 0xAAAAAAAA, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // LSL 31
+    {OP(0,  0, 1, 0), 0x55555555, NO_SRC2, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // LSL 0
+    {OP(0,  0, 1, 0), 0xAAAAAAAA, NO_SRC2, 0xAAAAAAAA, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N}, // LSL 0
+    {OP(0,  1, 1, 0), 0x55555555, NO_SRC2, 0xAAAAAAAA, FLAG_C | FLAG_Z, FLAG_N                  }, // LSL 1
+    {OP(0,  1, 1, 0), 0xAAAAAAAA, NO_SRC2, 0x55555554, FLAG_Z | FLAG_N, FLAG_C                  }, // LSL 1
+    {OP(0, 31, 1, 0), 0x55555555, NO_SRC2, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  }, // LSL 31
+    {OP(0, 31, 1, 0), 0xAAAAAAAA, NO_SRC2, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // LSL 31
 
-    {OP(1,  0, 1, 0), 0x55555555, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  }, // LSR 0 (32)
-    {OP(1,  0, 1, 0), 0xAAAAAAAA, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z}, // LSR 0 (32)
-    {OP(1,  1, 1, 0), 0x55555555, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  }, // LSR 1
-    {OP(1,  1, 1, 0), 0xAAAAAAAA, 0x55555555, FLAG_C | FLAG_N, 0                       }, // LSR 1
-    {OP(1, 31, 1, 0), 0x55555555, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // LSR 31
-    {OP(1, 31, 1, 0), 0xAAAAAAAA, 0x00000001, FLAG_Z | FLAG_N, 0                       }, // LSR 31
+    {OP(1,  0, 1, 0), 0x55555555, NO_SRC2, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  }, // LSR 0 (32)
+    {OP(1,  0, 1, 0), 0xAAAAAAAA, NO_SRC2, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z}, // LSR 0 (32)
+    {OP(1,  1, 1, 0), 0x55555555, NO_SRC2, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  }, // LSR 1
+    {OP(1,  1, 1, 0), 0xAAAAAAAA, NO_SRC2, 0x55555555, FLAG_C | FLAG_N, 0                       }, // LSR 1
+    {OP(1, 31, 1, 0), 0x55555555, NO_SRC2, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // LSR 31
+    {OP(1, 31, 1, 0), 0xAAAAAAAA, NO_SRC2, 0x00000001, FLAG_Z | FLAG_N, 0                       }, // LSR 31
 
-    {OP(2,  0, 1, 0), 0x55555555, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  }, // ASR 0 (32)
-    {OP(2,  0, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N}, // ASR 0 (32)
-    {OP(2,  1, 1, 0), 0x55555555, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  }, // ASR 1
-    {OP(2,  1, 1, 0), 0xAAAAAAAA, 0xD5555555, FLAG_C | FLAG_Z, FLAG_N                  }, // ASR 1
-    {OP(2, 31, 1, 0), 0x55555555, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // ASR 31
-    {OP(2, 31, 1, 0), 0xAAAAAAAA, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  }, // ASR 31
+    {OP(2,  0, 1, 0), 0x55555555, NO_SRC2, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  }, // ASR 0 (32)
+    {OP(2,  0, 1, 0), 0xAAAAAAAA, NO_SRC2, 0xFFFFFFFF, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N}, // ASR 0 (32)
+    {OP(2,  1, 1, 0), 0x55555555, NO_SRC2, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  }, // ASR 1
+    {OP(2,  1, 1, 0), 0xAAAAAAAA, NO_SRC2, 0xD5555555, FLAG_C | FLAG_Z, FLAG_N                  }, // ASR 1
+    {OP(2, 31, 1, 0), 0x55555555, NO_SRC2, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         }, // ASR 31
+    {OP(2, 31, 1, 0), 0xAAAAAAAA, NO_SRC2, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  }, // ASR 31
 };
 
 #undef OP
@@ -79,16 +81,16 @@ static uint32_t get_cpsr_arm() {
     return ret;
 }
 
-bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
+bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label) {
 
     bool res = true;
 
-    group_cb("sh.imm");
+    group_cb(label);
 
     uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
 
-    for(int i = 0; i < num_shift_imm_tests; i++) {
-        const struct TestInfo *test = &shift_imm_tests[i];
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo *test = &tests[i];
     
         // value test
         code_buf[0] = test->opcode;
@@ -96,7 +98,7 @@ bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
-        uint32_t out = func(0xBAD, test->m_in, 0x2BAD, 0x3BAD);
+        uint32_t out = func(0xBAD, test->m_in, test->n_in, 0x3BAD);
 
         if(out != test->d_out) {
             res = false;
@@ -117,7 +119,7 @@ bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
         code_buf[5] = 0x4686; // mov lr r0
         code_buf[6] = 0x4718; // bx r3
 
-        out = func(test->psr_in | psr_save, test->m_in, 0x2BAD, (intptr_t)get_cpsr_arm);
+        out = func(test->psr_in | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
         out &= PSR_MASK;
 
         if(out != test->psr_out) {
@@ -141,7 +143,7 @@ bool run_shift_imm_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
             code_buf[9] = 0xBD00; // pop pc
 
-            out = func(test->psr_in | psr_save, test->m_in, 0x2BAD, 0x3BAD);
+            out = func(test->psr_in | psr_save, test->m_in, test->n_in, 0x3BAD);
 
             if(out != !!(test->psr_out & flags[j])) {
                 res = false;
@@ -158,7 +160,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
 
-    ret = run_shift_imm_tests(group_cb, fail_cb) && ret;
+    ret = run_test_list(group_cb, fail_cb, shift_imm_tests, num_shift_imm_tests, "sh.imm") && ret;
 
     return ret;
 }
