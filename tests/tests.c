@@ -54,6 +54,99 @@ static const struct TestInfo shift_imm_tests[] = {
 
 static const int num_shift_imm_tests = sizeof(shift_imm_tests) / sizeof(shift_imm_tests[0]);
 
+// add/sub reg/imm3
+#define OP(op, rm, rn, rd) (0x1800 | op << 9 | rm << 6 | rn << 3 | rd)
+
+static const struct TestInfo add_sub_tests[] = {
+    // ADD r0 r1 r2
+    {OP(0, 2, 1, 0), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 0
+    {OP(0, 2, 1, 0), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_Z                  },
+    {OP(0, 2, 1, 0), 0x00000000, 0x00000001, 0x00000001, FLAG_Z | FLAG_N, 0                       },
+    {OP(0, 2, 1, 0), 0x00000001, 0x00000000, 0x00000001, FLAG_C | FLAG_N, 0                       },
+    {OP(0, 2, 1, 0), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, FLAG_C | FLAG_Z, 0                       },
+    {OP(0, 2, 1, 0), 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_V | FLAG_Z, 0                       },
+    {OP(0, 2, 1, 0), 0x7FFFFFFF, 0x00000001, 0x80000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(0, 2, 1, 0), 0x00000001, 0x7FFFFFFF, 0x80000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(0, 2, 1, 0), 0x7FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFE, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(0, 2, 1, 0), 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0, 2, 1, 0), 0x80000000, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_N                  },
+    {OP(0, 2, 1, 0), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFE, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(0, 2, 1, 0), 0xFFFFFFFF, 0x7FFFFFFF, 0x7FFFFFFE, FLAG_V | FLAG_N, FLAG_C                  },
+    {OP(0, 2, 1, 0), 0x80000000, 0x00000000, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0, 2, 1, 0), 0x00000000, 0x80000000, 0x80000000, FLAG_V | FLAG_C, FLAG_N                  },
+    {OP(0, 2, 1, 0), 0x80000000, 0x80000000, 0x00000000, FLAG_N         , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0, 2, 1, 0), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0, 2, 1, 0), 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_C, FLAG_N                  },
+    {OP(0, 2, 1, 0), 0xFFFFFFFF, 0x00000001, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(0, 2, 1, 0), 0x00000001, 0xFFFFFFFF, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(0, 2, 1, 0), 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(0, 2, 1, 0), 0x80000000, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(0, 2, 1, 0), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+
+    // SUB r0 r1 r2
+    {OP(1, 2, 1, 0), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 23
+    {OP(1, 2, 1, 0), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(1, 2, 1, 0), 0x00000000, 0x00000001, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 1, 0), 0x00000001, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 1, 0), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 1, 0), 0x00000000, 0x7FFFFFFF, 0x80000001, FLAG_V | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 1, 0), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFE, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 1, 0), 0x00000001, 0x7FFFFFFF, 0x80000002, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 1, 0), 0x7FFFFFFF, 0x7FFFFFFF, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 2, 1, 0), 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 2, 1, 0), 0x80000000, 0x7FFFFFFF, 0x00000001, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(1, 2, 1, 0), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 2, 1, 0), 0xFFFFFFFF, 0x7FFFFFFF, 0x80000000, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 1, 0), 0x80000000, 0x00000000, 0x80000000, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 1, 0), 0x00000000, 0x80000000, 0x80000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 2, 1, 0), 0x80000000, 0x80000000, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 2, 1, 0), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 1, 0), 0x00000000, 0xFFFFFFFF, 0x00000001, FLAG_V | FLAG_C, 0                       },
+    {OP(1, 2, 1, 0), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFE, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 1, 0), 0x00000001, 0xFFFFFFFF, 0x00000002, FLAG_V | FLAG_N, 0                       },
+    {OP(1, 2, 1, 0), 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 1, 0), 0x80000000, 0xFFFFFFFF, 0x80000001, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 1, 0), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    // ADD r0 r1 #imm
+    {OP(2, 0, 1, 0), 0x00000000, NO_SRC2   , 0x00000000, 0              , FLAG_Z                  }, // 46
+    {OP(2, 0, 1, 0), 0x00000000, NO_SRC2   , 0x00000000, PSR_MASK       , FLAG_Z                  },
+    {OP(2, 1, 1, 0), 0x00000000, NO_SRC2   , 0x00000001, FLAG_Z | FLAG_N, 0                       },
+    {OP(2, 0, 1, 0), 0x00000001, NO_SRC2   , 0x00000001, FLAG_C | FLAG_N, 0                       },
+    {OP(2, 0, 1, 0), 0x7FFFFFFF, NO_SRC2   , 0x7FFFFFFF, FLAG_C | FLAG_Z, 0                       },
+    {OP(2, 3, 1, 0), 0x00000000, NO_SRC2   , 0x00000003, FLAG_V | FLAG_Z, 0                       },
+    {OP(2, 1, 1, 0), 0x7FFFFFFF, NO_SRC2   , 0x80000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(2, 3, 1, 0), 0x7FFFFFFD, NO_SRC2   , 0x80000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(2, 3, 1, 0), 0xFFFFFFFC, NO_SRC2   , 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_N                  },
+    {OP(2, 3, 1, 0), 0xFFFFFFFF, NO_SRC2   , 0x00000002, FLAG_V | FLAG_N, FLAG_C                  },
+    {OP(2, 0, 1, 0), 0x80000000, NO_SRC2   , 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(2, 0, 1, 0), 0xFFFFFFFF, NO_SRC2   , 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(2, 7, 1, 0), 0x00000000, NO_SRC2   , 0x00000007, FLAG_V | FLAG_C, 0                       },
+    {OP(2, 1, 1, 0), 0xFFFFFFFF, NO_SRC2   , 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(2, 7, 1, 0), 0xFFFFFFF9, NO_SRC2   , 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    // SUB r0 r1 #imm
+    {OP(3, 0, 1, 0), 0x00000000, NO_SRC2   , 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 61
+    {OP(3, 0, 1, 0), 0x00000000, NO_SRC2   , 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(3, 1, 1, 0), 0x00000000, NO_SRC2   , 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(3, 0, 1, 0), 0x00000001, NO_SRC2   , 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(3, 0, 1, 0), 0x7FFFFFFF, NO_SRC2   , 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(3, 3, 1, 0), 0x00000000, NO_SRC2   , 0xFFFFFFFD, FLAG_V | FLAG_Z, FLAG_N                  },
+    {OP(3, 1, 1, 0), 0x7FFFFFFF, NO_SRC2   , 0x7FFFFFFE, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(3, 3, 1, 0), 0x00000001, NO_SRC2   , 0xFFFFFFFE, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(3, 3, 1, 0), 0x00000003, NO_SRC2   , 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(3, 3, 1, 0), 0x80000000, NO_SRC2   , 0x7FFFFFFD, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(3, 3, 1, 0), 0xFFFFFFFF, NO_SRC2   , 0xFFFFFFFC, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(3, 0, 1, 0), 0x80000000, NO_SRC2   , 0x80000000, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(3, 0, 1, 0), 0xFFFFFFFF, NO_SRC2   , 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(3, 1, 1, 0), 0xFFFFFFFF, NO_SRC2   , 0xFFFFFFFE, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(3, 7, 1, 0), 0x00000007, NO_SRC2   , 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+};
+
+#undef OP
+
+static const int num_add_sub_tests = sizeof(add_sub_tests) / sizeof(add_sub_tests[0]);
+
 // PSR helpers as we can't access from thumb
 __attribute__((target("arm")))
 static void set_cpsr_arm(uint32_t v) {
@@ -161,6 +254,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     bool ret = true;
 
     ret = run_test_list(group_cb, fail_cb, shift_imm_tests, num_shift_imm_tests, "sh.imm") && ret;
+    ret = run_test_list(group_cb, fail_cb, add_sub_tests, num_add_sub_tests, "addsub") && ret;
 
     return ret;
 }
