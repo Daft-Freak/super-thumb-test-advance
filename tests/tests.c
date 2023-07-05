@@ -147,6 +147,53 @@ static const struct TestInfo add_sub_tests[] = {
 
 static const int num_add_sub_tests = sizeof(add_sub_tests) / sizeof(add_sub_tests[0]);
 
+
+// mov/cmp/add/sub imm8
+#define OP(op, rdn, imm) (0x2000 | op << 11 | rdn << 8 | imm)
+
+static const struct TestInfo mov_cmp_add_sub_imm_tests[] = {
+    // MOV r1 #imm
+    // only sets Z/N and N=1 is impossible
+    {OP(0, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, 0              , FLAG_Z                  }, // 0
+    {OP(0, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0, 1, 0xFF), 0x00000000, NO_SRC2   , 0x000000FF, FLAG_Z | FLAG_N, 0                       },
+
+    // CMP r1 #imm
+    {OP(1, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 3
+    {OP(1, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(1, 1, 0x01), 0x00000000, NO_SRC2   , 0x00000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 1, 0x00), 0x00000001, NO_SRC2   , 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 1, 0xFF), 0x80000000, NO_SRC2   , 0x80000000, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(1, 1, 0xFF), 0xFFFFFFFF, NO_SRC2   , 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+
+    // ADD r1 #imm
+    {OP(2, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, 0              , FLAG_Z                  }, // 9
+    {OP(2, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, PSR_MASK       , FLAG_Z                  },
+    {OP(2, 1, 0x01), 0x00000000, NO_SRC2   , 0x00000001, FLAG_C | FLAG_Z, 0                       },
+    {OP(2, 1, 0x00), 0x00000001, NO_SRC2   , 0x00000001, FLAG_Z | FLAG_N, 0                       },
+    {OP(2, 1, 0x00), 0x7FFFFFFF, NO_SRC2   , 0x7FFFFFFF, FLAG_C | FLAG_Z, 0                       },
+    {OP(2, 1, 0xFF), 0x00000000, NO_SRC2   , 0x000000FF, FLAG_V | FLAG_N, 0                       },
+    {OP(2, 1, 0x01), 0x7FFFFFFF, NO_SRC2   , 0x80000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(2, 1, 0x7F), 0xFFFFFFFF, NO_SRC2   , 0x0000007E, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(2, 1, 0x00), 0x80000000, NO_SRC2   , 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(2, 1, 0x01), 0xFFFFFFFF, NO_SRC2   , 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    // SUB r1 #imm
+    {OP(3, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 19
+    {OP(3, 1, 0x00), 0x00000000, NO_SRC2   , 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(3, 1, 0x01), 0x00000000, NO_SRC2   , 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(3, 1, 0x00), 0x00000001, NO_SRC2   , 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(3, 1, 0x00), 0x7FFFFFFF, NO_SRC2   , 0x7FFFFFFF, FLAG_C | FLAG_Z, FLAG_C                  },
+    {OP(3, 1, 0xFF), 0x80000000, NO_SRC2   , 0x7FFFFF01, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(3, 1, 0xFF), 0xFFFFFFFF, NO_SRC2   , 0xFFFFFF00, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(3, 1, 0xFF), 0x000000FF, NO_SRC2   , 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(3, 1, 0xFF), 0x00000000, NO_SRC2   , 0xFFFFFF01, FLAG_V | FLAG_Z, FLAG_N                  },
+};
+
+#undef OP
+
+static const int num_mov_cmp_add_sub_imm_tests = sizeof(mov_cmp_add_sub_imm_tests) / sizeof(mov_cmp_add_sub_imm_tests[0]);
+
 // PSR helpers as we can't access from thumb
 __attribute__((target("arm")))
 static void set_cpsr_arm(uint32_t v) {
@@ -174,7 +221,7 @@ static uint32_t get_cpsr_arm() {
     return ret;
 }
 
-bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label) {
+bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label, int dest) {
 
     bool res = true;
 
@@ -187,7 +234,13 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
     
         // value test
         code_buf[0] = test->opcode;
-        code_buf[1] = 0x4770; // BX LR
+        if(dest == 0)
+            code_buf[1] = 0x4770; // BX LR
+        else
+        {
+            code_buf[1] = dest << 3; // mov r0 rN
+            code_buf[2] = 0x4770; // BX LR
+        }
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
@@ -253,8 +306,9 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
 
-    ret = run_test_list(group_cb, fail_cb, shift_imm_tests, num_shift_imm_tests, "sh.imm") && ret;
-    ret = run_test_list(group_cb, fail_cb, add_sub_tests, num_add_sub_tests, "addsub") && ret;
+    ret = run_test_list(group_cb, fail_cb, shift_imm_tests, num_shift_imm_tests, "sh.imm", 0) && ret;
+    ret = run_test_list(group_cb, fail_cb, add_sub_tests, num_add_sub_tests, "addsub", 0) && ret;
+    ret = run_test_list(group_cb, fail_cb, mov_cmp_add_sub_imm_tests, num_mov_cmp_add_sub_imm_tests, "dp.imm", 1) && ret;
 
     return ret;
 }
