@@ -221,7 +221,7 @@ static uint32_t get_cpsr_arm() {
     return ret;
 }
 
-bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label, int dest) {
+bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label, int dest, bool flags_for_val) {
 
     bool res = true;
 
@@ -229,22 +229,34 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
 
     uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
 
+    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
+
     for(int i = 0; i < num_tests; i++) {
         const struct TestInfo *test = &tests[i];
     
         // value test
-        code_buf[0] = test->opcode;
-        if(dest == 0)
-            code_buf[1] = 0x4770; // BX LR
-        else
-        {
-            code_buf[1] = dest << 3; // mov r0 rN
-            code_buf[2] = 0x4770; // BX LR
+        uint16_t *ptr = code_buf;
+
+        if(flags_for_val) {
+            *ptr++ = 0xB500; // push lr
+            *ptr++ = 0xF000 | ((set_cpsr_off >> 12) & 0x7FF); // bl set_cpsr
+            *ptr++ = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
         }
+
+        *ptr++ = test->opcode;
+        if(dest != 0)
+            *ptr++ = dest << 3; // mov r0 rN
+        
+        if(flags_for_val)
+            *ptr++ = 0xBD00; // pop pc
+        else
+            *ptr++ = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
-        uint32_t out = func(0xBAD, test->m_in, test->n_in, 0x3BAD);
+        uint32_t in0 = flags_for_val ? (test->psr_in | psr_save) : 0xBAD;
+
+        uint32_t out = func(in0, test->m_in, test->n_in, 0x3BAD);
 
         if(out != test->d_out) {
             res = false;
@@ -253,11 +265,9 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
 
         // flags test
         // this relies on the PSR helpers not affecting anything other than R0
-        int off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
-
         code_buf[0] = 0xB500; // push lr
-        code_buf[1] = 0xF000 | ((off >> 12) & 0x7FF); // bl set_cpsr
-        code_buf[2] = 0xF800 | ((off >> 1) & 0x7FF); // bl set_cpsr
+        code_buf[1] = 0xF000 | ((set_cpsr_off >> 12) & 0x7FF); // bl set_cpsr
+        code_buf[2] = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
 
         code_buf[3] = test->opcode;
 
@@ -306,9 +316,9 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
 
-    ret = run_test_list(group_cb, fail_cb, shift_imm_tests, num_shift_imm_tests, "sh.imm", 0) && ret;
-    ret = run_test_list(group_cb, fail_cb, add_sub_tests, num_add_sub_tests, "addsub", 0) && ret;
-    ret = run_test_list(group_cb, fail_cb, mov_cmp_add_sub_imm_tests, num_mov_cmp_add_sub_imm_tests, "dp.imm", 1) && ret;
+    ret = run_test_list(group_cb, fail_cb, shift_imm_tests, num_shift_imm_tests, "sh.imm", 0, false) && ret;
+    ret = run_test_list(group_cb, fail_cb, add_sub_tests, num_add_sub_tests, "addsub", 0, false) && ret;
+    ret = run_test_list(group_cb, fail_cb, mov_cmp_add_sub_imm_tests, num_mov_cmp_add_sub_imm_tests, "dp.imm", 1, false) && ret;
 
     return ret;
 }
