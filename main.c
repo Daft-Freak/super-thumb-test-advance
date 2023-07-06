@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <seven/prelude.h>
 #include <seven/hw/bios/decompression.h>
@@ -14,6 +15,8 @@
 #include "tests/tests.h"
 
 static int cursor_x = 0, cursor_y = 0;
+
+static uint8_t *save_ptr = (uint8_t *)0xE000000;
 
 static void load_font() {
     BG_PALETTE[0] = 0;
@@ -80,6 +83,10 @@ static int log_printf(const char *format, ...) {
 
     write_text(buf);
     logOutput(LOG_WARN, buf);
+
+    // also write messages to save data
+    memcpy(save_ptr, buf, len - 1);
+    save_ptr += len - 1;
 
     free(buf);
     return ret;
