@@ -680,7 +680,7 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
 
             if(out != !!(test->psr_out & flags[j])) {
                 res = false;
-                fail_cb(i, out, test->psr_out & flags[j]);
+                fail_cb(i, out ? flags[j] : 0, test->psr_out & flags[j]);
             }
         }
 
