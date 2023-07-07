@@ -970,6 +970,87 @@ bool run_hi_reg_tests(GroupCallback group_cb, FailCallback fail_cb, const struct
     return res;
 }
 
+bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label) {
+
+    bool res = true;
+
+    group_cb(label);
+    int i = 0;
+
+    #define OP(rd, word) (0x4800 | rd << 8 | word)
+
+    // + 0
+    uint16_t *ptr = code_buf;
+
+    *ptr++ = OP(0, 0); // r0 0
+
+    *ptr++ = 0x4770; // BX LR
+    *ptr++ = 0x0123;
+    *ptr++ = 0x4567;
+    *ptr++ = 0x89AB;
+    *ptr++ = 0xCDEF;
+    *ptr++ = 0xFEDC;
+    *ptr++ = 0xBA98;
+    *ptr++ = 0x7654;
+    *ptr++ = 0x3210;
+    uint16_t *end_ptr = ptr;
+
+    TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+    uint32_t out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+
+    uint32_t expected = 0x45670123;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // now with an offset
+    i++;
+    code_buf[0] = OP(0, 1); // r0 4
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = 0xCDEF89AB;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // unalign it
+    i++;
+    for(uint16_t *p = end_ptr; p != code_buf + 1; p--)
+        *p = *(p - 1);
+
+    code_buf[0] = 0;
+    code_buf[1] = OP(0, 0); // r0 0
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = 0x01234770;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // ... and with an offset again
+    i++;
+    code_buf[1] = OP(0, 1); // r0 4
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = 0x89AB4567;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    #undef OP
+
+    return res;
+}
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
@@ -979,6 +1060,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_test_list(group_cb, fail_cb, mov_cmp_add_sub_imm_tests, num_mov_cmp_add_sub_imm_tests, "dp.imm", 1, false) && ret;
     ret = run_test_list(group_cb, fail_cb, dp_tests, num_dp_tests, "dp", 1, true) && ret;
     ret = run_hi_reg_tests(group_cb, fail_cb, hi_reg_tests, num_hi_reg_tests, "hireg") && ret;
+    ret = run_pc_rel_load_tests(group_cb, fail_cb, hi_reg_tests, num_hi_reg_tests, "pcrell") && ret;
 
     return ret;
 }
