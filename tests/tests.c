@@ -2,7 +2,7 @@
 
 typedef uint32_t (*TestFunc)(uint32_t, uint32_t, uint32_t, uint32_t);
 
-static _Alignas(4) uint16_t code_buf[16];
+static _Alignas(4) uint16_t code_buf[32];
 
 #define FLAG_V (1 << 28)
 #define FLAG_C (1 << 29)
@@ -571,6 +571,94 @@ static const struct TestInfo dp_tests[] = {
 
 static const int num_dp_tests = sizeof(dp_tests) / sizeof(dp_tests[0]);
 
+// high reg
+#define OP(op, rm, rdn) (0x4400 | op << 8 | (rdn & 8) << 4 | rm << 3 | (rdn & 7))
+
+static const struct TestInfo hi_reg_tests[] = {
+    // ADD r1 r9
+    // does not affect flags
+    {OP(0, 9, 1), 0x00000000, 0x00000000, 0x00000000, 0              , 0                       }, // 0
+    {OP(0, 9, 1), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0x00000000, 0x00000001, 0x00000001, 0              , 0                       },
+    {OP(0, 9, 1), 0x00000001, 0x00000000, 0x00000001, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, 0              , 0                       },
+    {OP(0, 9, 1), 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0x7FFFFFFF, 0x00000001, 0x80000000, 0              , 0                       },
+    {OP(0, 9, 1), 0x00000001, 0x7FFFFFFF, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0x7FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFE, 0              , 0                       },
+    {OP(0, 9, 1), 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 0              , 0                       },
+    {OP(0, 9, 1), 0x80000000, 0x7FFFFFFF, 0xFFFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFE, 0              , 0                       },
+    {OP(0, 9, 1), 0xFFFFFFFF, 0x7FFFFFFF, 0x7FFFFFFE, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0x80000000, 0x00000000, 0x80000000, 0              , 0                       },
+    {OP(0, 9, 1), 0x00000000, 0x80000000, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0x80000000, 0x80000000, 0x00000000, 0              , 0                       },
+    {OP(0, 9, 1), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0              , 0                       },
+    {OP(0, 9, 1), 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0xFFFFFFFF, 0x00000001, 0x00000000, 0              , 0                       },
+    {OP(0, 9, 1), 0x00000001, 0xFFFFFFFF, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF, 0              , 0                       },
+    {OP(0, 9, 1), 0x80000000, 0xFFFFFFFF, 0x7FFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE, 0              , 0                       },
+
+    // ADD r8 r2
+    // does not affect flags
+    {OP(0, 2, 8), 0x00000000, 0x00000000, 0x00000000, 0              , 0                       }, // 23
+    {OP(0, 2, 8), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0x00000000, 0x00000001, 0x00000001, 0              , 0                       },
+    {OP(0, 2, 8), 0x00000001, 0x00000000, 0x00000001, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, 0              , 0                       },
+    {OP(0, 2, 8), 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0x7FFFFFFF, 0x00000001, 0x80000000, 0              , 0                       },
+    {OP(0, 2, 8), 0x00000001, 0x7FFFFFFF, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0x7FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFE, 0              , 0                       },
+    {OP(0, 2, 8), 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 0              , 0                       },
+    {OP(0, 2, 8), 0x80000000, 0x7FFFFFFF, 0xFFFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFE, 0              , 0                       },
+    {OP(0, 2, 8), 0xFFFFFFFF, 0x7FFFFFFF, 0x7FFFFFFE, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0x80000000, 0x00000000, 0x80000000, 0              , 0                       },
+    {OP(0, 2, 8), 0x00000000, 0x80000000, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0x80000000, 0x80000000, 0x00000000, 0              , 0                       },
+    {OP(0, 2, 8), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0              , 0                       },
+    {OP(0, 2, 8), 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0xFFFFFFFF, 0x00000001, 0x00000000, 0              , 0                       },
+    {OP(0, 2, 8), 0x00000001, 0xFFFFFFFF, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF, 0              , 0                       },
+    {OP(0, 2, 8), 0x80000000, 0xFFFFFFFF, 0x7FFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 2, 8), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE, 0              , 0                       },
+
+    // ADD r8 r9
+    // does not affect flags
+    {OP(0, 9, 8), 0x00000000, 0x00000000, 0x00000000, 0              , 0                       }, // 46
+    {OP(0, 9, 8), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0x00000000, 0x00000001, 0x00000001, 0              , 0                       },
+    {OP(0, 9, 8), 0x00000001, 0x00000000, 0x00000001, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, 0              , 0                       },
+    {OP(0, 9, 8), 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0x7FFFFFFF, 0x00000001, 0x80000000, 0              , 0                       },
+    {OP(0, 9, 8), 0x00000001, 0x7FFFFFFF, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0x7FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFE, 0              , 0                       },
+    {OP(0, 9, 8), 0x7FFFFFFF, 0x80000000, 0xFFFFFFFF, 0              , 0                       },
+    {OP(0, 9, 8), 0x80000000, 0x7FFFFFFF, 0xFFFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFE, 0              , 0                       },
+    {OP(0, 9, 8), 0xFFFFFFFF, 0x7FFFFFFF, 0x7FFFFFFE, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0x80000000, 0x00000000, 0x80000000, 0              , 0                       },
+    {OP(0, 9, 8), 0x00000000, 0x80000000, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0x80000000, 0x80000000, 0x00000000, 0              , 0                       },
+    {OP(0, 9, 8), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0              , 0                       },
+    {OP(0, 9, 8), 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0xFFFFFFFF, 0x00000001, 0x00000000, 0              , 0                       },
+    {OP(0, 9, 8), 0x00000001, 0xFFFFFFFF, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF, 0              , 0                       },
+    {OP(0, 9, 8), 0x80000000, 0xFFFFFFFF, 0x7FFFFFFF, PSR_MASK       , PSR_MASK                },
+    {OP(0, 9, 8), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE, 0              , 0                       },
+
+};
+
+#undef OP
+
+static const int num_hi_reg_tests = sizeof(hi_reg_tests) / sizeof(hi_reg_tests[0]);
+
 // PSR helpers as we can't access from thumb
 __attribute__((target("arm")))
 static void set_cpsr_arm(uint32_t v) {
@@ -689,6 +777,106 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
     return res;
 }
 
+bool run_hi_reg_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label) {
+
+    bool res = true;
+
+    group_cb(label);
+
+    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
+
+    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
+
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo *test = &tests[i];
+
+        bool hiDest = test->opcode & (1 << 7);
+        bool hiSrc = test->opcode & (1 << 6);
+
+        // value test
+        uint16_t *ptr = code_buf;
+
+        // save r8
+        *ptr++ = 0x4640; // mov r0 r8
+        *ptr++ = 0xB401; // push r0
+        // save r9
+        *ptr++ = 0x4648; // mov r0 r9
+        *ptr++ = 0xB401; // push r0
+
+        // move src/dst to high reg
+        if(hiSrc)
+            *ptr++ = 0x4691; // mov r9 r2
+        
+        if(hiDest)
+            *ptr++ = 0x4688; // mov r8 r1
+
+        *ptr++ = test->opcode;
+
+        // move dst to ret
+        if(hiDest)
+            *ptr++ = 0x4640; // mov r0 r8
+        else
+            *ptr++ = 0x0008; // mov r0 r1
+
+        // restore r9
+        *ptr++ = 0xBC02; // pop r1
+        *ptr++ = 0x4689; // mov r9 r1
+        // restore r8
+        *ptr++ = 0xBC02; // pop r1
+        *ptr++ = 0x4688; // mov r8 r1
+        
+        *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        uint32_t out = func(0xBAD, test->m_in, test->n_in, 0x3BAD);
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(i, out, test->d_out);
+        }
+
+        // flags test
+        // this relies on the PSR helpers not affecting anything other than R0
+        ptr = code_buf;
+        *ptr++ = 0xB500; // push lr
+        *ptr++ = 0xF000 | ((set_cpsr_off >> 12) & 0x7FF); // bl set_cpsr
+        *ptr++ = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
+
+        *ptr++ = 0x4640; // mov r0 r8
+        *ptr++ = 0xB401; // push r0
+        *ptr++ = 0x4648; // mov r0 r9
+        *ptr++ = 0xB401; // push r0
+
+        if(hiSrc)
+            *ptr++ = 0x4691; // mov r9 r2
+        
+        if(hiDest)
+            *ptr++ = 0x4688; // mov r8 r1
+
+        *ptr++ =test->opcode;
+
+        *ptr++ = 0xBC02; // pop r1
+        *ptr++ = 0x4689; // mov r9 r1
+        *ptr++ = 0xBC02; // pop r1
+        *ptr++ = 0x4688; // mov r8 r1
+
+        *ptr++ = 0xBC01; // pop r0
+        *ptr++ = 0x4686; // mov lr r0
+        *ptr++ = 0x4718; // bx r3
+
+        out = func(test->psr_in | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
+        out &= PSR_MASK;
+
+        if(out != test->psr_out) {
+            res = false;
+            fail_cb(i, out, test->psr_out);
+        }
+    }
+
+    return res;
+}
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
@@ -697,6 +885,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_test_list(group_cb, fail_cb, add_sub_tests, num_add_sub_tests, "addsub", 0, false) && ret;
     ret = run_test_list(group_cb, fail_cb, mov_cmp_add_sub_imm_tests, num_mov_cmp_add_sub_imm_tests, "dp.imm", 1, false) && ret;
     ret = run_test_list(group_cb, fail_cb, dp_tests, num_dp_tests, "dp", 1, true) && ret;
+    ret = run_hi_reg_tests(group_cb, fail_cb, hi_reg_tests, num_hi_reg_tests, "hireg") && ret;
 
     return ret;
 }
