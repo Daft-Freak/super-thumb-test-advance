@@ -653,6 +653,99 @@ static const struct TestInfo hi_reg_tests[] = {
     {OP(0, 9, 8), 0x80000000, 0xFFFFFFFF, 0x7FFFFFFF, PSR_MASK       , PSR_MASK                },
     {OP(0, 9, 8), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE, 0              , 0                       },
 
+    // CMP r1 r9
+    {OP(1, 9, 1), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 69
+    {OP(1, 9, 1), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(1, 9, 1), 0x00000000, 0x00000001, 0x00000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 1), 0x00000001, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 1), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 1), 0x00000000, 0x7FFFFFFF, 0x00000000, FLAG_V | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 1), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 1), 0x00000001, 0x7FFFFFFF, 0x00000001, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 1), 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 9, 1), 0x7FFFFFFF, 0x80000000, 0x7FFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 9, 1), 0x80000000, 0x7FFFFFFF, 0x80000000, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(1, 9, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 9, 1), 0xFFFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 1), 0x80000000, 0x00000000, 0x80000000, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 1), 0x00000000, 0x80000000, 0x00000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 9, 1), 0x80000000, 0x80000000, 0x80000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 9, 1), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 1), 0x00000000, 0xFFFFFFFF, 0x00000000, FLAG_V | FLAG_C, 0                       },
+    {OP(1, 9, 1), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 1), 0x00000001, 0xFFFFFFFF, 0x00000001, FLAG_V | FLAG_N, 0                       },
+    {OP(1, 9, 1), 0xFFFFFFFF, 0x80000000, 0xFFFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    // CMP r8 r2
+    {OP(1, 2, 8), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 92
+    {OP(1, 2, 8), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(1, 2, 8), 0x00000000, 0x00000001, 0x00000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 8), 0x00000001, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 8), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 8), 0x00000000, 0x7FFFFFFF, 0x00000000, FLAG_V | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 8), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 8), 0x00000001, 0x7FFFFFFF, 0x00000001, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 8), 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 2, 8), 0x7FFFFFFF, 0x80000000, 0x7FFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 2, 8), 0x80000000, 0x7FFFFFFF, 0x80000000, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(1, 2, 8), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 2, 8), 0xFFFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 8), 0x80000000, 0x00000000, 0x80000000, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 8), 0x00000000, 0x80000000, 0x00000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 2, 8), 0x80000000, 0x80000000, 0x80000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 2, 8), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 8), 0x00000000, 0xFFFFFFFF, 0x00000000, FLAG_V | FLAG_C, 0                       },
+    {OP(1, 2, 8), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 2, 8), 0x00000001, 0xFFFFFFFF, 0x00000001, FLAG_V | FLAG_N, 0                       },
+    {OP(1, 2, 8), 0xFFFFFFFF, 0x80000000, 0xFFFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 2, 8), 0x80000000, 0xFFFFFFFF, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 2, 8), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    // CMP r8 r9
+    {OP(1, 9, 8), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 115
+    {OP(1, 9, 8), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(1, 9, 8), 0x00000000, 0x00000001, 0x00000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 8), 0x00000001, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 8), 0x7FFFFFFF, 0x00000000, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 8), 0x00000000, 0x7FFFFFFF, 0x00000000, FLAG_V | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 8), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 8), 0x00000001, 0x7FFFFFFF, 0x00000001, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 8), 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 9, 8), 0x7FFFFFFF, 0x80000000, 0x7FFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 9, 8), 0x80000000, 0x7FFFFFFF, 0x80000000, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(1, 9, 8), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 9, 8), 0xFFFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 8), 0x80000000, 0x00000000, 0x80000000, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 8), 0x00000000, 0x80000000, 0x00000000, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(1, 9, 8), 0x80000000, 0x80000000, 0x80000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(1, 9, 8), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 8), 0x00000000, 0xFFFFFFFF, 0x00000000, FLAG_V | FLAG_C, 0                       },
+    {OP(1, 9, 8), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(1, 9, 8), 0x00000001, 0xFFFFFFFF, 0x00000001, FLAG_V | FLAG_N, 0                       },
+    {OP(1, 9, 8), 0xFFFFFFFF, 0x80000000, 0xFFFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 9, 8), 0x80000000, 0xFFFFFFFF, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(1, 9, 8), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    // MOV
+    // does not affect flags
+    // also, the other tests rely on this working
+    {OP(2, 2, 8), NO_SRC1   , 0x00000000, 0x00000000, 0              , 0                       }, // 138,  r8 r2
+    {OP(2, 2, 8), NO_SRC1   , 0x00000000, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(2, 2, 8), NO_SRC1   , 0x80000000, 0x80000000, 0              , 0                       },
+    {OP(2, 2, 8), NO_SRC1   , 0x80000000, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(2, 9, 1), NO_SRC1   , 0x00000000, 0x00000000, 0              , 0                       }, // r1 r9
+    {OP(2, 9, 1), NO_SRC1   , 0x00000000, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(2, 9, 1), NO_SRC1   , 0x80000000, 0x80000000, 0              , 0                       },
+    {OP(2, 9, 1), NO_SRC1   , 0x80000000, 0x80000000, PSR_MASK       , PSR_MASK                },
+    {OP(2, 9, 8), NO_SRC1   , 0x00000000, 0x00000000, 0              , 0                       }, // r8 r9
+    {OP(2, 9, 8), NO_SRC1   , 0x00000000, 0x00000000, PSR_MASK       , PSR_MASK                },
+    {OP(2, 9, 8), NO_SRC1   , 0x80000000, 0x80000000, 0              , 0                       },
+    {OP(2, 9, 8), NO_SRC1   , 0x80000000, 0x80000000, PSR_MASK       , PSR_MASK                },
+
+    // BX
+    // branches
 };
 
 #undef OP
