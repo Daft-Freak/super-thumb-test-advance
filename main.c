@@ -46,7 +46,7 @@ static void write_text_pos(int x, int y, const char *text) {
 
 static void write_text(const char *text) {
     for(; *text; text++) {
-        if(*text == '\n') {
+        if(*text == '\n' || cursor_x == 29) {
             cursor_y++;
             cursor_x = 0;
 
