@@ -752,6 +752,33 @@ static const struct TestInfo hi_reg_tests[] = {
 
 static const int num_hi_reg_tests = sizeof(hi_reg_tests) / sizeof(hi_reg_tests[0]);
 
+#ifdef __ARM_ARCH_6M__
+
+#if defined(PICO_BUILD)
+#include <pico/platform.h>
+#define in_ram(fn) __not_in_flash_func(fn)
+#else
+#error need to place helper in ram
+#endif
+
+void in_ram(set_cpsr)(uint32_t v) {
+    asm volatile(
+        "msr apsr, %0"
+        :
+        : "r"(v)
+    );
+}
+
+static uint32_t get_cpsr_arm() {
+    uint32_t ret;
+    asm volatile(
+        "mrs %0, apsr"
+        : "=r"(ret)
+    );
+
+    return ret;
+}
+#else
 // PSR helpers as we can't access from thumb
 __attribute__((target("arm")))
 static void set_cpsr_arm(uint32_t v) {
@@ -778,6 +805,8 @@ static uint32_t get_cpsr_arm() {
 
     return ret;
 }
+
+#endif
 
 bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label, int dest, bool flags_for_val) {
 
