@@ -914,6 +914,105 @@ static const struct TestInfo store_half_reg_tests[] = {
 
 static const int num_store_half_reg_tests = sizeof(store_half_reg_tests) / sizeof(store_half_reg_tests[0]);
 
+// load, immediate offset
+#define OP_W(off, rb, rd) (0x6800 | off << 6 | rb << 3 | rd)
+#define OP_B(off, rb, rd) (0x7800 | off << 6 | rb << 3 | rd)
+#define OP_H(off, rb, rd) (0x8800 | off << 6 | rb << 3 | rd)
+
+static const struct TestInfo load_imm_off_tests[] = {
+    // ldr r0 [r2 #imm]
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr    , 0x01234567, 0, 0}, // 0
+    {OP_W(1, 2, 0), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x67012345, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x45670123, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x23456701, 0, 0},
+#endif
+
+    // ldrb r0 [r2 #imm]
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr    , 0x00000067, 0, 0}, // 6
+    {OP_B(1, 2, 0), NO_SRC1, test_data_addr    , 0x00000045, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP_B(2, 2, 0), NO_SRC1, test_data_addr    , 0x00000023, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x00000023, 0, 0},
+    {OP_B(3, 2, 0), NO_SRC1, test_data_addr    , 0x00000001, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x00000001, 0, 0},
+    {OP_B(4, 2, 0), NO_SRC1, test_data_addr    , 0x000000EF, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x000000EF, 0, 0},
+
+    // ldrh r0 [r2 #imm]
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr    , 0x00004567, 0, 0}, // 15
+    {OP_H(1, 2, 0), NO_SRC1, test_data_addr    , 0x00000123, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x00000123, 0, 0},
+    {OP_H(2, 2, 0), NO_SRC1, test_data_addr    , 0x0000CDEF, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x0000CDEF, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x67000045, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x23000001, 0, 0},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+
+static const int num_load_imm_off_tests = sizeof(load_imm_off_tests) / sizeof(load_imm_off_tests[0]);
+
+// store, immediate offset
+#define OP_W(off, rb, rd) (0x6000 | off << 6 | rb << 3 | rd)
+#define OP_B(off, rb, rd) (0x7000 | off << 6 | rb << 3 | rd)
+#define OP_H(off, rb, rd) (0x8000 | off << 6 | rb << 3 | rd)
+
+static const struct TestInfo store_imm_off_tests[] = {
+    // doesn't need r1, but test code uses it to work out the addr
+    // str r0 [r2 #imm]
+    {OP_W(0, 2, 0), 0, test_data_addr    , 0x7E57DA7A, 0, 0}, // 0
+    {OP_W(1, 2, 0), 4, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP_W(0, 2, 0), 0, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP_W(0, 2, 0), 0, test_data_addr + 1, 0x7E57DA7A, 0, 0},
+    {OP_W(0, 2, 0), 0, test_data_addr + 2, 0x7E57DA7A, 0, 0},
+    {OP_W(0, 2, 0), 0, test_data_addr + 3, 0x7E57DA7A, 0, 0},
+#endif
+
+    // strb r0 [r2 #imm]
+    {OP_B(0, 2, 0), 0, test_data_addr    , 0x0123457A, 0, 0}, // 6
+    {OP_B(1, 2, 0), 1, test_data_addr    , 0x01237A67, 0, 0},
+    {OP_B(0, 2, 0), 0, test_data_addr + 1, 0x01237A67, 0, 0},
+    {OP_B(2, 2, 0), 2, test_data_addr    , 0x017A4567, 0, 0},
+    {OP_B(0, 2, 0), 0, test_data_addr + 2, 0x017A4567, 0, 0},
+    {OP_B(3, 2, 0), 3, test_data_addr    , 0x7A234567, 0, 0},
+    {OP_B(0, 2, 0), 0, test_data_addr + 3, 0x7A234567, 0, 0},
+    {OP_B(4, 2, 0), 4, test_data_addr    , 0x89ABCD7A, 0, 0},
+    {OP_B(0, 2, 0), 0, test_data_addr + 4, 0x89ABCD7A, 0, 0},
+
+    // strh r0 [r2 #imm]
+    {OP_H(0, 2, 0), 0, test_data_addr    , 0x0123DA7A, 0, 0}, // 15
+    {OP_H(1, 2, 0), 2, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP_H(0, 2, 0), 0, test_data_addr + 2, 0xDA7A4567, 0, 0},
+    {OP_H(2, 2, 0), 4, test_data_addr    , 0x89ABDA7A, 0, 0},
+    {OP_H(0, 2, 0), 0, test_data_addr + 4, 0x89ABDA7A, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP_H(0, 2, 0), 0, test_data_addr + 1, 0x0123DA7A, 0, 0},
+    {OP_H(0, 2, 0), 0, test_data_addr + 3, 0xDA7A4567, 0, 0},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+
+static const int num_store_imm_off_tests = sizeof(store_imm_off_tests) / sizeof(store_imm_off_tests[0]);
+
 #ifdef __ARM_ARCH_6M__
 
 #if defined(PICO_BUILD)
@@ -1298,6 +1397,8 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_load_store_tests(group_cb, fail_cb, store_reg_tests, num_store_reg_tests, "str.reg", true) && ret;
     ret = run_load_store_tests(group_cb, fail_cb, load_sign_ex_tests, num_load_sign_ex_tests, "ldr.sx", false) && ret;
     ret = run_load_store_tests(group_cb, fail_cb, store_half_reg_tests, num_store_half_reg_tests, "strh.reg", true) && ret;
+    ret = run_load_store_tests(group_cb, fail_cb, load_imm_off_tests, num_load_imm_off_tests, "ldr.imm", false) && ret;
+    ret = run_load_store_tests(group_cb, fail_cb, store_imm_off_tests, num_store_imm_off_tests, "str.imm", true) && ret;
 
     return ret;
 }
