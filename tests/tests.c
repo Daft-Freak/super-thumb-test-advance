@@ -830,6 +830,89 @@ static const struct TestInfo store_reg_tests[] = {
 
 static const int num_store_reg_tests = sizeof(store_reg_tests) / sizeof(store_reg_tests[0]);
 
+// load sign extended byte/half, register offset
+#define OP(h, s, ro, rb, rd) (0x5200 | h << 11 | s << 10 | ro << 6 | rb << 3 | rd)
+
+static const struct TestInfo load_sign_ex_tests[] = {
+    // ldrh r0 [r2 r1]
+    {OP(1, 0, 1, 2, 0), 0x00000000, test_data_addr    , 0x00004567, 0, 0}, // 0
+    {OP(1, 0, 1, 2, 0), 0x00000002, test_data_addr    , 0x00000123, 0, 0},
+    {OP(1, 0, 1, 2, 0), 0x00000000, test_data_addr + 2, 0x00000123, 0, 0},
+    {OP(1, 0, 1, 2, 0), 0x00000004, test_data_addr    , 0x0000CDEF, 0, 0},
+    {OP(1, 0, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x0000CDEF, 0, 0},
+    {OP(1, 0, 1, 2, 0), 0xFFFFFFFE, test_data_addr + 2, 0x00004567, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP(1, 0, 1, 2, 0), 0x00000001, test_data_addr    , 0x67000045, 0, 0},
+    {OP(1, 0, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x67000045, 0, 0},
+    {OP(1, 0, 1, 2, 0), 0x00000003, test_data_addr    , 0x23000001, 0, 0},
+    {OP(1, 0, 1, 2, 0), 0x00000000, test_data_addr + 3, 0x23000001, 0, 0},
+#endif
+
+    // ldsb r0 [r2 r1]
+    {OP(0, 1, 1, 2, 0), 0x00000000, test_data_addr    , 0x00000067, 0, 0}, // 10
+    {OP(0, 1, 1, 2, 0), 0x00000001, test_data_addr    , 0x00000045, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000002, test_data_addr    , 0x00000023, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000000, test_data_addr + 2, 0x00000023, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000003, test_data_addr    , 0x00000001, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000000, test_data_addr + 3, 0x00000001, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000004, test_data_addr    , 0xFFFFFFEF, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000000, test_data_addr + 4, 0xFFFFFFEF, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0xFFFFFFFF, test_data_addr + 1, 0x00000067, 0, 0},
+    // a few more that get extended
+    {OP(0, 1, 1, 2, 0), 0x00000006, test_data_addr    , 0xFFFFFFAB, 0, 0},
+    {OP(0, 1, 1, 2, 0), 0x00000008, test_data_addr    , 0xFFFFFF98, 0, 0},
+
+    // ldsh r0 [r2 r1]
+    {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr    , 0x00004567, 0, 0}, // 22
+    {OP(1, 1, 1, 2, 0), 0x00000002, test_data_addr    , 0x00000123, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 2, 0x00000123, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0x00000004, test_data_addr    , 0xFFFFCDEF, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 4, 0xFFFFCDEF, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0xFFFFFFFE, test_data_addr + 2, 0x00004567, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP(1, 1, 1, 2, 0), 0x00000001, test_data_addr    , 0x00000045, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0x00000003, test_data_addr    , 0x00000001, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 3, 0x00000001, 0, 0},
+    // extended... as bytes
+    {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 5, 0xFFFFFFCD, 0, 0},
+    {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 7, 0xFFFFFF89, 0, 0},
+#endif
+};
+
+#undef OP
+
+static const int num_load_sign_ex_tests = sizeof(load_sign_ex_tests) / sizeof(load_sign_ex_tests[0]);
+
+// store half, register offset
+#define OP(ro, rb, rd) (0x5200 | ro << 6 | rb << 3 | rd)
+
+static const struct TestInfo store_half_reg_tests[] = {
+    // strh r0 [r2 r1]
+    {OP(1, 2, 0), 0x00000000, test_data_addr    , 0x0123DA7A, 0, 0}, // 0
+    {OP(1, 2, 0), 0x00000002, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP(1, 2, 0), 0x00000000, test_data_addr + 2, 0xDA7A4567, 0, 0},
+    {OP(1, 2, 0), 0x00000004, test_data_addr    , 0x89ABDA7A, 0, 0},
+    {OP(1, 2, 0), 0x00000000, test_data_addr + 4, 0x89ABDA7A, 0, 0},
+    {OP(1, 2, 0), 0xFFFFFFFE, test_data_addr + 2, 0x0123DA7A, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP(1, 2, 0), 0x00000001, test_data_addr    , 0x0123DA7A, 0, 0},
+    {OP(1, 2, 0), 0x00000000, test_data_addr + 1, 0x0123DA7A, 0, 0},
+    {OP(1, 2, 0), 0x00000003, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP(1, 2, 0), 0x00000000, test_data_addr + 3, 0xDA7A4567, 0, 0},
+#endif
+};
+
+#undef OP
+
+static const int num_store_half_reg_tests = sizeof(store_half_reg_tests) / sizeof(store_half_reg_tests[0]);
 
 #ifdef __ARM_ARCH_6M__
 
@@ -1213,6 +1296,8 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_pc_rel_load_tests(group_cb, fail_cb, "pcrell") && ret;
     ret = run_load_store_tests(group_cb, fail_cb, load_reg_tests, num_load_reg_tests, "ldr.reg", false) && ret;
     ret = run_load_store_tests(group_cb, fail_cb, store_reg_tests, num_store_reg_tests, "str.reg", true) && ret;
+    ret = run_load_store_tests(group_cb, fail_cb, load_sign_ex_tests, num_load_sign_ex_tests, "ldr.sx", false) && ret;
+    ret = run_load_store_tests(group_cb, fail_cb, store_half_reg_tests, num_store_half_reg_tests, "strh.reg", true) && ret;
 
     return ret;
 }
