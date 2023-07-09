@@ -999,7 +999,7 @@ bool run_hi_reg_tests(GroupCallback group_cb, FailCallback fail_cb, const struct
     return res;
 }
 
-bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label) {
+bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
 
     bool res = true;
 
@@ -1089,7 +1089,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_test_list(group_cb, fail_cb, mov_cmp_add_sub_imm_tests, num_mov_cmp_add_sub_imm_tests, "dp.imm", 1, false) && ret;
     ret = run_test_list(group_cb, fail_cb, dp_tests, num_dp_tests, "dp", 1, true) && ret;
     ret = run_hi_reg_tests(group_cb, fail_cb, hi_reg_tests, num_hi_reg_tests, "hireg") && ret;
-    ret = run_pc_rel_load_tests(group_cb, fail_cb, hi_reg_tests, num_hi_reg_tests, "pcrell") && ret;
+    ret = run_pc_rel_load_tests(group_cb, fail_cb, "pcrell") && ret;
 
     return ret;
 }
