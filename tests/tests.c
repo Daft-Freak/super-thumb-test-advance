@@ -4,6 +4,10 @@ typedef uint32_t (*TestFunc)(uint32_t, uint32_t, uint32_t, uint32_t);
 
 static _Alignas(4) uint16_t code_buf[32];
 
+static const uint32_t test_data_init[4] = {0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210};
+static uint32_t test_data[4];
+static const uint32_t test_data_addr = (uintptr_t)test_data;
+
 #define FLAG_V (1 << 28)
 #define FLAG_C (1 << 29)
 #define FLAG_Z (1 << 30)
@@ -752,6 +756,81 @@ static const struct TestInfo hi_reg_tests[] = {
 
 static const int num_hi_reg_tests = sizeof(hi_reg_tests) / sizeof(hi_reg_tests[0]);
 
+// load byte/word, register offset
+#define OP(byte, ro, rb, rd) (0x5800 | byte << 10 | ro << 6 | rb << 3 | rd)
+
+static const struct TestInfo load_reg_tests[] = {
+    // ldr r0 [r2 r1]
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr    , 0x01234567, 0, 0}, // 0
+    {OP(0, 1, 2, 0), 0x00000004, test_data_addr    , 0x89ABCDEF, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x89ABCDEF, 0, 0},
+    {OP(0, 1, 2, 0), 0xFFFFFFFC, test_data_addr + 4, 0x01234567, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP(0, 1, 2, 0), 0x00000001, test_data_addr    , 0x67012345, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x67012345, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000002, test_data_addr    , 0x45670123, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 2, 0x45670123, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000003, test_data_addr    , 0x23456701, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 3, 0x23456701, 0, 0},
+#endif
+
+    // ldrb r0 [r2 r1]
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr    , 0x00000067, 0, 0}, // 10
+    {OP(1, 1, 2, 0), 0x00000001, test_data_addr    , 0x00000045, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000002, test_data_addr    , 0x00000023, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 2, 0x00000023, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000003, test_data_addr    , 0x00000001, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 3, 0x00000001, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000004, test_data_addr    , 0x000000EF, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x000000EF, 0, 0},
+    {OP(1, 1, 2, 0), 0xFFFFFFFF, test_data_addr + 1, 0x00000067, 0, 0},
+};
+
+#undef OP
+
+static const int num_load_reg_tests = sizeof(load_reg_tests) / sizeof(load_reg_tests[0]);
+
+// store byte/word, register offset
+#define OP(byte, ro, rb, rd) (0x5000 | byte << 10 | ro << 6 | rb << 3 | rd)
+
+static const struct TestInfo store_reg_tests[] = {
+    // str r0 [r2 r1]
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr    , 0x7E57DA7A, 0, 0}, // 0
+    {OP(0, 1, 2, 0), 0x00000004, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+    {OP(0, 1, 2, 0), 0xFFFFFFFC, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP(0, 1, 2, 0), 0x00000001, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x7E57DA7A, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000002, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 2, 0x7E57DA7A, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000003, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 3, 0x7E57DA7A, 0, 0},
+#endif
+
+    // strb r0 [r2 r1]
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr    , 0x0123457A, 0, 0}, // 10
+    {OP(1, 1, 2, 0), 0x00000001, test_data_addr    , 0x01237A67, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x01237A67, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000002, test_data_addr    , 0x017A4567, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 2, 0x017A4567, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000003, test_data_addr    , 0x7A234567, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 3, 0x7A234567, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000004, test_data_addr    , 0x89ABCD7A, 0, 0},
+    {OP(1, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x89ABCD7A, 0, 0},
+    {OP(1, 1, 2, 0), 0xFFFFFFFF, test_data_addr + 1, 0x0123457A, 0, 0},
+};
+
+#undef OP
+
+static const int num_store_reg_tests = sizeof(store_reg_tests) / sizeof(store_reg_tests[0]);
+
+
 #ifdef __ARM_ARCH_6M__
 
 #if defined(PICO_BUILD)
@@ -1080,6 +1159,48 @@ bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const c
     return res;
 }
 
+bool run_load_store_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label, bool is_store) {
+
+    bool res = true;
+
+    group_cb(label);
+
+    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
+
+    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
+
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo *test = &tests[i];
+
+        // init data
+        for(int i = 0; i < 4; i++)
+            test_data[i] = test_data_init[i];
+    
+        // value test
+        uint16_t *ptr = code_buf;
+
+        *ptr++ = test->opcode;
+        *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
+
+        if(is_store) {
+            // read back nearest word
+            uint32_t addr = (test->m_in + test->n_in) & ~3;
+            out = *(uint32_t *)addr; 
+        }
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(i, out, test->d_out);
+        }
+    }
+
+    return res;
+}
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
@@ -1090,6 +1211,8 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_test_list(group_cb, fail_cb, dp_tests, num_dp_tests, "dp", 1, true) && ret;
     ret = run_hi_reg_tests(group_cb, fail_cb, hi_reg_tests, num_hi_reg_tests, "hireg") && ret;
     ret = run_pc_rel_load_tests(group_cb, fail_cb, "pcrell") && ret;
+    ret = run_load_store_tests(group_cb, fail_cb, load_reg_tests, num_load_reg_tests, "ldr.reg", false) && ret;
+    ret = run_load_store_tests(group_cb, fail_cb, store_reg_tests, num_store_reg_tests, "str.reg", true) && ret;
 
     return ret;
 }
