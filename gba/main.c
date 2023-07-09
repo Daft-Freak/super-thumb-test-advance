@@ -57,13 +57,19 @@ static void write_text(const char *text) {
                     biosCpuSet(MAP_BASE_ADDR(2) + (y + 1) * 64, MAP_BASE_ADDR(2) + y * 64, CS_32BIT | (64 / 4));
                 cursor_y--;
             }
-        } else if(*text == '\r')
-            cursor_x = 0;
-        else {
-            uint16_t *ptr = MAP_BASE_ADDR(2) + cursor_x * 2 + cursor_y * 64;
-            *ptr = *text - ' ';
-            cursor_x++;
+
+            if(*text == '\n' )
+                continue;
         }
+
+        if(*text == '\r') {
+            cursor_x = 0;
+            continue;
+        }
+
+        uint16_t *ptr = MAP_BASE_ADDR(2) + cursor_x * 2 + cursor_y * 64;
+        *ptr = *text - ' ';
+        cursor_x++;
     }
 }
 
