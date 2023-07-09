@@ -1474,6 +1474,106 @@ bool run_sp_rel_load_store_tests(GroupCallback group_cb, FailCallback fail_cb, c
     return res;
 }
 
+bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
+
+    bool res = true;
+
+    group_cb(label);
+    int i = 0;
+
+    #define OP(sp, rd, word) (0xA000 | sp << 11 | rd << 8 | word)
+
+    // + 0
+    uint16_t *ptr = code_buf;
+
+    *ptr++ = OP(0, 0, 0); // r0 pc 0
+
+    *ptr++ = 0x4770; // BX LR
+    uint16_t *end_ptr = ptr;
+
+    TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+    uint32_t out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+
+    uint32_t expected = (uintptr_t)code_buf + 4;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // now with an offset
+    i++;
+    code_buf[0] = OP(0, 0, 1); // r0 pc 4
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = (uintptr_t)code_buf + 8;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // big offset
+    i++;
+    code_buf[0] = OP(0, 0, 0xFF); // r0 pc 1020
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = (uintptr_t)code_buf + 1024;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // now repeat for SP
+    uint32_t spIn;
+    asm volatile(
+        "mov %0, sp"
+        : "=r"(spIn)
+    );
+
+    // + 0
+    i++;
+    code_buf[0] = OP(1, 0, 0); // r0 sp 0
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = spIn;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // now with an offset
+    i++;
+    code_buf[0] = OP(1, 0, 1); // r0 sp 4
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = spIn + 4;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    // big offset
+    i++;
+    code_buf[0] = OP(1, 0, 0xFF); // r0 sp 1020
+
+    out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
+    expected = spIn + 1020;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    #undef OP
+
+    return res;
+}
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
@@ -1492,6 +1592,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_load_store_tests(group_cb, fail_cb, store_imm_off_tests, num_store_imm_off_tests, "str.imm", true) && ret;
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, load_sp_rel_tests, num_load_sp_rel_tests, "ldr.sp", false) && ret;
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, store_sp_rel_tests, num_store_sp_rel_tests, "str.sp", true) && ret;
+    ret = run_load_addr_tests(group_cb, fail_cb, "ldaddr") && ret;
 
     return ret;
 }
