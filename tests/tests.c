@@ -1013,6 +1013,51 @@ static const struct TestInfo store_imm_off_tests[] = {
 
 static const int num_store_imm_off_tests = sizeof(store_imm_off_tests) / sizeof(store_imm_off_tests[0]);
 
+// load, sp-relative
+// test helper moves r2 to sp
+#define OP(off, rd) (0x9800 | rd << 8 | off)
+
+static const struct TestInfo load_sp_rel_tests[] = {
+    // ldr r0 [r2 #imm]
+    {OP(0, 0), NO_SRC1, test_data_addr    , 0x01234567, 0, 0}, // 0
+    {OP(1, 0), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0, 0},
+    {OP(0, 0), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP(0, 0), NO_SRC1, test_data_addr + 1, 0x67012345, 0, 0},
+    {OP(0, 0), NO_SRC1, test_data_addr + 2, 0x45670123, 0, 0},
+    {OP(0, 0), NO_SRC1, test_data_addr + 3, 0x23456701, 0, 0},
+#endif
+};
+
+#undef OP
+
+static const int num_load_sp_rel_tests = sizeof(load_sp_rel_tests) / sizeof(load_sp_rel_tests[0]);
+
+// store, sp-relative
+// test helper moves r2 to sp
+#define OP(off, rd) (0x9000  | rd << 8 | off)
+
+static const struct TestInfo store_sp_rel_tests[] = {
+    // doesn't need r1, but test code uses it to work out the addr
+    // str r0 [r2 #imm]
+    {OP(0, 0), 0, test_data_addr    , 0x7E57DA7A, 0, 0}, // 0
+    {OP(1, 0), 4, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP(0, 0), 0, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+
+#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+    // misaligned
+    {OP(0, 0), 0, test_data_addr + 1, 0x7E57DA7A, 0, 0},
+    {OP(0, 0), 0, test_data_addr + 2, 0x7E57DA7A, 0, 0},
+    {OP(0, 0), 0, test_data_addr + 3, 0x7E57DA7A, 0, 0},
+#endif
+};
+
+#undef OP
+
+static const int num_store_sp_rel_tests = sizeof(store_sp_rel_tests) / sizeof(store_sp_rel_tests[0]);
+
 #ifdef __ARM_ARCH_6M__
 
 #if defined(PICO_BUILD)
@@ -1383,6 +1428,52 @@ bool run_load_store_tests(GroupCallback group_cb, FailCallback fail_cb, const st
     return res;
 }
 
+bool run_sp_rel_load_store_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label, bool is_store) {
+
+    bool res = true;
+
+    group_cb(label);
+
+    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
+
+    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
+
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo *test = &tests[i];
+
+        // init data
+        for(int i = 0; i < 4; i++)
+            test_data[i] = test_data_init[i];
+    
+        // value test
+        uint16_t *ptr = code_buf;
+
+        *ptr++ = 0x466B; // mov r3 sp
+        *ptr++ = 0x4695; // mov sp r2
+
+        *ptr++ = test->opcode;
+        *ptr++ = 0x469D; // mov sp r3
+        *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
+
+        if(is_store) {
+            // read back nearest word
+            uint32_t addr = (test->m_in + test->n_in) & ~3;
+            out = *(uint32_t *)addr; 
+        }
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(i, out, test->d_out);
+        }
+    }
+
+    return res;
+}
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
@@ -1399,6 +1490,8 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_load_store_tests(group_cb, fail_cb, store_half_reg_tests, num_store_half_reg_tests, "strh.reg", true) && ret;
     ret = run_load_store_tests(group_cb, fail_cb, load_imm_off_tests, num_load_imm_off_tests, "ldr.imm", false) && ret;
     ret = run_load_store_tests(group_cb, fail_cb, store_imm_off_tests, num_store_imm_off_tests, "str.imm", true) && ret;
+    ret = run_sp_rel_load_store_tests(group_cb, fail_cb, load_sp_rel_tests, num_load_sp_rel_tests, "ldr.sp", false) && ret;
+    ret = run_sp_rel_load_store_tests(group_cb, fail_cb, store_sp_rel_tests, num_store_sp_rel_tests, "str.sp", true) && ret;
 
     return ret;
 }
