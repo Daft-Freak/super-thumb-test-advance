@@ -1058,6 +1058,64 @@ static const struct TestInfo store_sp_rel_tests[] = {
 
 static const int num_store_sp_rel_tests = sizeof(store_sp_rel_tests) / sizeof(store_sp_rel_tests[0]);
 
+// add/sub sp
+// test code moves to/from sp
+#define OP(s, word) (0xB000 | s <<  7 | word)
+
+static const struct TestInfo sp_offset_tests[] = {
+    // ADD sp #imm
+    {OP(0, 0x00), 0x00000000, NO_SRC2, 0x00000000, 0, 0}, // 0
+    {OP(0, 0x01), 0x00000000, NO_SRC2, 0x00000004, 0, 0},
+    {OP(0, 0x7F), 0x00000000, NO_SRC2, 0x000001FC, 0, 0},
+    {OP(0, 0x00), 0x00000004, NO_SRC2, 0x00000004, 0, 0},
+    {OP(0, 0x01), 0x00000004, NO_SRC2, 0x00000008, 0, 0},
+    {OP(0, 0x7F), 0x00000004, NO_SRC2, 0x00000200, 0, 0},
+
+#ifdef __ARM_ARCH_6M__ // can't have unaligned SP
+    {OP(0, 0x00), 0x00000001, NO_SRC2, 0x00000000, 0, 0},
+    {OP(0, 0x01), 0x00000001, NO_SRC2, 0x00000004, 0, 0},
+    {OP(0, 0x7F), 0x00000001, NO_SRC2, 0x000001FC, 0, 0},
+    {OP(0, 0x00), 0x00000002, NO_SRC2, 0x00000000, 0, 0},
+    {OP(0, 0x01), 0x00000002, NO_SRC2, 0x00000004, 0, 0},
+    {OP(0, 0x7F), 0x00000002, NO_SRC2, 0x000001FC, 0, 0},
+#else
+    {OP(0, 0x00), 0x00000001, NO_SRC2, 0x00000001, 0, 0},
+    {OP(0, 0x01), 0x00000001, NO_SRC2, 0x00000005, 0, 0},
+    {OP(0, 0x7F), 0x00000001, NO_SRC2, 0x000001FD, 0, 0},
+    {OP(0, 0x00), 0x00000002, NO_SRC2, 0x00000002, 0, 0},
+    {OP(0, 0x01), 0x00000002, NO_SRC2, 0x00000006, 0, 0},
+    {OP(0, 0x7F), 0x00000002, NO_SRC2, 0x000001FE, 0, 0},
+#endif
+
+    // SUB sp #imm
+    {OP(1, 0x00), 0x00000000, NO_SRC2, 0x00000000, 0, 0}, // 12
+    {OP(1, 0x01), 0x00000000, NO_SRC2, 0xFFFFFFFC, 0, 0},
+    {OP(1, 0x7F), 0x00000000, NO_SRC2, 0xFFFFFE04, 0, 0},
+    {OP(1, 0x00), 0x00000004, NO_SRC2, 0x00000004, 0, 0},
+    {OP(1, 0x01), 0x00000004, NO_SRC2, 0x00000000, 0, 0},
+    {OP(1, 0x7F), 0x00000004, NO_SRC2, 0xFFFFFE08, 0, 0},
+
+#ifdef __ARM_ARCH_6M__ // can't have unaligned SP
+    {OP(1, 0x00), 0x00000001, NO_SRC2, 0x00000000, 0, 0},
+    {OP(1, 0x01), 0x00000001, NO_SRC2, 0xFFFFFFFC, 0, 0},
+    {OP(1, 0x7F), 0x00000001, NO_SRC2, 0xFFFFFE04, 0, 0},
+    {OP(1, 0x00), 0x00000002, NO_SRC2, 0x00000000, 0, 0},
+    {OP(1, 0x01), 0x00000002, NO_SRC2, 0xFFFFFFFC, 0, 0},
+    {OP(1, 0x7F), 0x00000002, NO_SRC2, 0xFFFFFE04, 0, 0},
+#else
+    {OP(1, 0x00), 0x00000001, NO_SRC2, 0x00000001, 0, 0},
+    {OP(1, 0x01), 0x00000001, NO_SRC2, 0xFFFFFFFD, 0, 0},
+    {OP(1, 0x7F), 0x00000001, NO_SRC2, 0xFFFFFE05, 0, 0},
+    {OP(1, 0x00), 0x00000002, NO_SRC2, 0x00000002, 0, 0},
+    {OP(1, 0x01), 0x00000002, NO_SRC2, 0xFFFFFFFE, 0, 0},
+    {OP(1, 0x7F), 0x00000002, NO_SRC2, 0xFFFFFE06, 0, 0},
+#endif
+};
+
+#undef OP
+
+static const int num_sp_offset_tests = sizeof(sp_offset_tests) / sizeof(sp_offset_tests[0]);
+
 #ifdef __ARM_ARCH_6M__
 
 #if defined(PICO_BUILD)
@@ -1136,8 +1194,19 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
             *ptr++ = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
         }
 
+        if(dest == 13) {
+            // setup sp to known value for sp offset tests
+            *ptr++ = 0x466B; // mov r3 sp
+            *ptr++ = 0x468D; // mov sp r1
+        }
+
         *ptr++ = test->opcode;
-        if(dest != 0)
+
+        if(dest == 13) {
+            *ptr++ = 0x4668; // mov r0 sp
+            *ptr++ = 0x469D; // mov sp r3
+        }
+        else if(dest != 0) // assume < 8
             *ptr++ = dest << 3; // mov r0 rN
         
         if(flags_for_val)
@@ -1155,6 +1224,9 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
             res = false;
             fail_cb(i, out, test->d_out);
         }
+
+        if(dest == 13)
+            continue; // don't run the flags tests for sp offset tests
 
         // flags test
         // this relies on the PSR helpers not affecting anything other than R0
@@ -1593,6 +1665,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, load_sp_rel_tests, num_load_sp_rel_tests, "ldr.sp", false) && ret;
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, store_sp_rel_tests, num_store_sp_rel_tests, "str.sp", true) && ret;
     ret = run_load_addr_tests(group_cb, fail_cb, "ldaddr") && ret;
+    ret = run_test_list(group_cb, fail_cb, sp_offset_tests, num_sp_offset_tests, "spoff", 13, false) && ret;
 
     return ret;
 }
