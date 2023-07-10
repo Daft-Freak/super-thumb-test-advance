@@ -1646,6 +1646,141 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     return res;
 }
 
+bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
+    static const uint32_t values[] = {0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210};
+    bool res = true;
+
+    group_cb(label);
+    int i = 0;
+
+    #define OP(load, pclr, regs) (0xB400 | load << 11 | pclr << 8 | regs)
+
+    // push r0-4, pop single (0-3)
+    for(int j = 0; j < 4; j++, i++) {
+        static const uint32_t expected[] = {0x01234567, 0x76543210, 0xFEDCBA98, 0x89ABCDEF};
+
+        uint16_t *ptr = code_buf;
+
+        *ptr++ = OP(0, 0, 0xF); // push r0-3
+        
+        // rotate through regs
+        // pop r0; pop r1; pop r2; pop r3
+        // pop r1; pop r2; pop r3; pop r0
+        // ...
+        for(int r = 0; r < 4; r++) {
+            int index = (r + j) % 4;
+            *ptr++ = OP(1, 0, 1 << index); // pop rN
+        }
+
+        *ptr++ = 0x4770; // BX LR
+        uint16_t *end_ptr = ptr;
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        uint32_t out = func(values[0], values[1], values[2], values[3]);
+
+        if(out != expected[j]) {
+            res = false;
+            fail_cb(i, out, expected[j]);
+        }
+    }
+
+    // push single, pop r0-4 (4-7)
+    for(int j = 0; j < 4; j++, i++) {
+        static const uint32_t expected[] = {0x76543210, 0x01234567, 0x89ABCDEF, 0xFEDCBA98};
+
+        uint16_t *ptr = code_buf;
+
+        // rotate through regs
+        // push r0; push r1; push r2; push r3
+        // push r1; push r2; push r3; push r0
+        // ...
+        for(int r = 0; r < 4; r++) {
+            int index = (r + j) % 4;
+            *ptr++ = OP(0, 0, 1 << index); // push rN
+        }
+
+        *ptr++ = OP(1, 0, 0xF); // pop r0-3
+
+        *ptr++ = 0x4770; // BX LR
+        uint16_t *end_ptr = ptr;
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        uint32_t out = func(values[0], values[1], values[2], values[3]);
+
+        if(out != expected[j]) {
+            res = false;
+            fail_cb(i, out, expected[j]);
+        }
+    }
+
+    // push r0, lr pop single (8-9)
+    for(int j = 0; j < 2; j++, i++) {
+        static const uint32_t expected[] = {0x01234567, 0x89ABCDEF};
+
+        uint16_t *ptr = code_buf;
+
+        *ptr++ = 0x4672; // mov r2 lr
+        *ptr++ = 0x468E; // mov lr r1
+
+        *ptr++ = OP(0, 1, 0x1); // push r0, lr
+
+        *ptr++ = 0x4696; // mov lr r2
+        
+        // rotate through regs
+        // pop r0; pop r1;
+        // pop r1; pop r0;
+        // ...
+        for(int r = 0; r < 2; r++) {
+            int index = (r + j) % 2;
+            *ptr++ = OP(1, 0, 1 << index); // pop rN
+        }
+
+        *ptr++ = 0x4770; // BX LR
+        uint16_t *end_ptr = ptr;
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        uint32_t out = func(values[0], values[1], values[2], values[3]);
+
+        if(out != expected[j]) {
+            res = false;
+            fail_cb(i, out, expected[j]);
+        }
+    }
+
+    // unaligned sp (10)
+    // has no effect
+    uint16_t *ptr = code_buf;
+
+    *ptr++ = 0x466B; // mov r3 sp
+    *ptr++ = 0x1C5A; // add r2 r3 1
+    *ptr++ = 0x4695; // mov sp r2
+
+    *ptr++ = OP(0, 0, 1); // push r0
+    *ptr++ = OP(1, 0, 1); // pop r0
+
+    *ptr++ = 0x469D; // mov sp r3
+    *ptr++ = 0x4770; // BX LR
+    uint16_t *end_ptr = ptr;
+
+    TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+    uint32_t out = func(values[0], values[1], values[2], values[3]);
+
+    uint32_t expected = 0x01234567;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+
+    #undef OP
+
+    return res;
+}
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
@@ -1666,6 +1801,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, store_sp_rel_tests, num_store_sp_rel_tests, "str.sp", true) && ret;
     ret = run_load_addr_tests(group_cb, fail_cb, "ldaddr") && ret;
     ret = run_test_list(group_cb, fail_cb, sp_offset_tests, num_sp_offset_tests, "spoff", 13, false) && ret;
+    ret = run_push_pop_tests(group_cb, fail_cb, "pushpop") && ret;
 
     return ret;
 }
