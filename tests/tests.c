@@ -1784,6 +1784,270 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
     return res;
 }
 
+bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
+    static const uint32_t values[] = {0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210};
+    bool res = true;
+
+    group_cb(label);
+    int i = 0;
+
+    #define OP(load, rb, regs) (0xC000 | load << 11 | rb << 8 | regs)
+
+    TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+    // stm r0-3, ldm single (0-3)
+    // stm is not the inverse of ldm
+    for(int j = 0; j < 4; j++, i++) {
+        static const uint32_t expected[] = {0x01234567, 0x76543210, 0xFEDCBA98, 0x89ABCDEF};
+
+        uint16_t *ptr = code_buf;
+        *ptr++ = 0xB480; // push r7
+
+        *ptr++ = 0x466F; // mov r7 sp
+        *ptr++ = 0x3F10; // sub r7 16
+
+        *ptr++ = OP(0, 7, 0xF); // stmia r7 r0-3
+
+        *ptr++ = 0x3F10; // sub r7 16
+
+        // rotate through regs
+        for(int r = 0; r < 4; r++) {
+            int index = (r + j) % 4;
+            *ptr++ = OP(1, 7, 1 << index); // ldmia r7 rN
+        }
+
+        *ptr++ = 0xBC80; // pop r7
+        *ptr++ = 0x4770; // BX LR
+
+
+        uint32_t out = func(values[0], values[1], values[2], values[3]);
+
+        if(out != expected[j]) {
+            res = false;
+            fail_cb(i, out, expected[j]);
+        }
+    }
+
+    // stm single, ldm r0-3 (4-7)
+    for(int j = 0; j < 4; j++, i++) {
+        static const uint32_t expected[] = {0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210};
+
+        uint16_t *ptr = code_buf;
+        *ptr++ = 0xB480; // push r7
+        *ptr++ = 0x466F; // mov r7 sp
+        *ptr++ = 0x3F10; // sub r7 16
+
+        // rotate through regs
+        for(int r = 0; r < 4; r++) {
+            int index = (r + j) % 4;
+            *ptr++ = OP(0, 7, 1 << index); // stmia r7 rN
+        }
+
+        *ptr++ = 0x3F10; // sub r7 16
+
+        *ptr++ = OP(1, 7, 0xF); // ldmia r7 r0-3
+
+        *ptr++ = 0xBC80; // pop r7
+        *ptr++ = 0x4770; // BX LR
+
+        uint32_t out = func(values[0], values[1], values[2], values[3]);
+
+        if(out != expected[j]) {
+            res = false;
+            fail_cb(i, out, expected[j]);
+        }
+    }
+
+    // stm base in list (8-11)
+    for(int j = 0; j < 4; j++, i++) {
+        uint32_t spIn;
+        asm volatile(
+            "mov %0, sp"
+            : "=r"(spIn)
+        );
+
+        uint16_t *ptr = code_buf;
+        *ptr++ = 0xB480; // push r7
+
+        *ptr++ = 0x466F; // mov r7 sp
+        *ptr++ = 0x3F10; // sub r7 16
+
+        *ptr++ = 0x0038 | j; // mov rN r7
+
+        *ptr++ = OP(0, j, 0xF); // stmia rN r0-3
+
+        *ptr++ = OP(1, 7, 0xF); // ldmia r7 r0-3
+
+        *ptr++ = j << 3; // mov r0 rN
+
+        *ptr++ = 0xBC80; // pop r7
+        *ptr++ = 0x4770; // BX LR
+
+        uint32_t out = func(values[0], values[1], values[2], values[3]);
+
+#ifdef __ARM_ARCH_6M__
+        uint32_t expected = spIn - 20; // always overwrites
+#else
+        uint32_t expected = j == 0 ? spIn - 20 : spIn - 4; // overwrites if not first reg
+#endif
+
+        if(out != expected) {
+            res = false;
+            fail_cb(i, out, expected);
+        }
+    }
+
+    // ldm base in list (12-15)
+    // doesn't write back
+    for(int j = 0; j < 4; j++, i++) {
+        uint32_t spIn;
+        asm volatile(
+            "mov %0, sp"
+            : "=r"(spIn)
+        );
+
+        static const uint32_t expected[] = {0x01234567, 0x89ABCDEF, 0xFEDCBA98, 0x76543210};
+
+        uint16_t *ptr = code_buf;
+        *ptr++ = 0xB480; // push r7
+
+        *ptr++ = 0x466F; // mov r7 sp
+        *ptr++ = 0x3F10; // sub r7 16
+
+        *ptr++ = OP(0, 7, 0xF); // stmia r7 r0-3
+
+        *ptr++ = 0x3F10; // sub r7 16
+        *ptr++ = 0x0038 | j; // mov rN r7
+
+        *ptr++ = OP(1, j, 0xF); // ldmia rN r0-3
+
+        *ptr++ = j << 3; // mov r0 rN
+
+        *ptr++ = 0xBC80; // pop r7
+        *ptr++ = 0x4770; // BX LR
+
+        uint32_t out = func(values[0], values[1], values[2], values[3]);
+        
+        if(out != expected[j]) {
+            res = false;
+            fail_cb(i, out, expected[j]);
+        }
+    }
+
+    // stm empty list (16)
+    // stores pc or lr
+    uint16_t *ptr = code_buf;
+    *ptr++ = 0xB580; // push r7,lr
+
+    *ptr++ = 0x468E; // mov lr r1
+
+    *ptr++ = 0x466F; // mov r7 sp
+    *ptr++ = 0x3F40; // sub r7 64
+
+    *ptr++ = OP(0, 7, 0); // stmia r7 nothing
+
+#ifdef __ARM_ARCH_6M__
+    *ptr++ = 0x3F04; // sub r7 4
+#else
+    *ptr++ = 0x3F40; // sub r7 64
+#endif
+
+    *ptr++ = OP(1, 7, 1); // ldmia r7 r0
+
+    *ptr++ = 0xBD80; // pop r7, lr
+
+    uint32_t out = func(values[0], values[1], values[2], values[3]);
+#ifdef __ARM_ARCH_6M__
+    uint32_t expected = values[1]; // stores lr
+#else
+    uint32_t expected = (uintptr_t)code_buf + 14; // stores pc
+#endif
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+    i++;
+
+    // ldm empty list (17)
+    // loads pc
+    uint32_t spIn;
+    asm volatile(
+        "mov %0, sp"
+        : "=r"(spIn)
+    );
+
+    ptr = code_buf;
+    *ptr++ = 0xB480; // push r7
+
+#ifdef __ARM_ARCH_6M__ // pop interworks so need to make sure the bit is set
+    *ptr++ = 0xA003; // add r0 pc 12
+    *ptr++ = 0x3801; // sub r0 1 (need to -2 then +1)
+#else
+    *ptr++ = 0xA002; // add r0 pc 8
+#endif
+
+    *ptr++ = 0xB401; // push r0
+
+    *ptr++ = 0x466F; // mov r7 sp
+    *ptr++ = OP(1, 7, 0); // ldmia r7 nothing
+
+    *ptr++ = 0x2700; // mov r7 0 (shouldn't get here)
+
+    *ptr++ = 0xBC01; // pop r0
+
+    *ptr++ = 0x0038; // mov r0 r7
+
+    *ptr++ = 0xBC80; // pop r7
+    *ptr++ = 0x4770; // BX LR
+
+    out = func(values[0], values[1], values[2], values[3]);
+
+#ifdef __ARM_ARCH_6M__
+    expected = spIn - 8/*2x push*/; // does not adjust base
+#else
+    expected = spIn - 8/*2x push*/ + 64; // adds 64 to base
+#endif
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+    i++;
+
+    // unaligned base (18)
+#ifndef __ARM_ARCH_6M__ // faults
+    // has no effect
+    ptr = code_buf;
+    *ptr++ = 0xB480; // push r7
+
+    *ptr++ = 0x466F; // mov r7 sp
+    *ptr++ = 0x3F05; // sub r7 5
+
+    *ptr++ = OP(0, 7, 1); // stmia r7 r0
+
+    *ptr++ = 0x3F04; // sub r7 4
+
+    *ptr++ = OP(1, 7, 1); // ldmia r7 r0
+
+    *ptr++ = 0xBC80; // pop r7
+    *ptr++ = 0x4770; // BX LR
+
+    out = func(values[0], values[1], values[2], values[3]);
+
+    expected = 0x01234567;
+
+    if(out != expected) {
+        res = false;
+        fail_cb(i, out, expected);
+    }
+#endif
+
+    #undef OP
+
+    return res;
+}
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     
     bool ret = true;
@@ -1805,6 +2069,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_load_addr_tests(group_cb, fail_cb, "ldaddr") && ret;
     ret = run_test_list(group_cb, fail_cb, sp_offset_tests, num_sp_offset_tests, "spoff", 13, false) && ret;
     ret = run_push_pop_tests(group_cb, fail_cb, "pushpop") && ret;
+    ret = run_ldm_stm_tests(group_cb, fail_cb, "ldmstm") && ret;
 
     return ret;
 }
