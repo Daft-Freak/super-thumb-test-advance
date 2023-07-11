@@ -10,6 +10,7 @@ gba_add_library_subdirectory(rom seven)
 add_executable(thumb-test
     main.c
     ../tests/tests.c
+    ../tests/load_store_tests.c
 )
 set_target_properties(thumb-test PROPERTIES SUFFIX ".elf")
 
