@@ -1668,7 +1668,9 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
 
     #define OP(load, pclr, regs) (0xB400 | load << 11 | pclr << 8 | regs)
 
-    // push r0-4, pop single (0-3)
+    TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+    // push r0-3, pop single (0-3)
     for(int j = 0; j < 4; j++, i++) {
         static const uint32_t expected[] = {0x01234567, 0x76543210, 0xFEDCBA98, 0x89ABCDEF};
 
@@ -1686,9 +1688,6 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
         }
 
         *ptr++ = 0x4770; // BX LR
-        uint16_t *end_ptr = ptr;
-
-        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -1698,7 +1697,7 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
         }
     }
 
-    // push single, pop r0-4 (4-7)
+    // push single, pop r0-3 (4-7)
     for(int j = 0; j < 4; j++, i++) {
         static const uint32_t expected[] = {0x76543210, 0x01234567, 0x89ABCDEF, 0xFEDCBA98};
 
@@ -1716,9 +1715,6 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
         *ptr++ = OP(1, 0, 0xF); // pop r0-3
 
         *ptr++ = 0x4770; // BX LR
-        uint16_t *end_ptr = ptr;
-
-        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -1751,9 +1747,6 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
         }
 
         *ptr++ = 0x4770; // BX LR
-        uint16_t *end_ptr = ptr;
-
-        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -1776,9 +1769,6 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
 
     *ptr++ = 0x469D; // mov sp r3
     *ptr++ = 0x4770; // BX LR
-    uint16_t *end_ptr = ptr;
-
-    TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
 
     uint32_t out = func(values[0], values[1], values[2], values[3]);
 
