@@ -484,9 +484,13 @@ static const struct TestInfo dp_tests[] = {
     {OP(0xC, 2, 1), 0xFFFFFFFF, 0x55555555, 0xFFFFFFFF, FLAG_C         , FLAG_C | FLAG_N         },
 
     // MUL r1 r2
-    // carry is a "meaningless value"
+    // carry is a "meaningless value" (v4)
     {OP(0xD, 2, 1), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 273
+#ifdef __ARM_ARCH_6M__
     {OP(0xD, 2, 1), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+#else
+    {OP(0xD, 2, 1), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_Z         },
+#endif
     {OP(0xD, 2, 1), 0x00000000, 0x00000001, 0x00000000, FLAG_N         , FLAG_Z                  }, // 0 * n
     {OP(0xD, 2, 1), 0x00000001, 0x00000000, 0x00000000, FLAG_N         , FLAG_Z                  },
     {OP(0xD, 2, 1), 0x00000000, 0xFFFFFFFF, 0x00000000, FLAG_N         , FLAG_Z                  },
@@ -495,7 +499,11 @@ static const struct TestInfo dp_tests[] = {
     {OP(0xD, 2, 1), 0x00000001, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_N         , 0                       },
     {OP(0xD, 2, 1), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFF, FLAG_Z         , 0                       },
     {OP(0xD, 2, 1), 0x00000001, 0x80000000, 0x80000000, FLAG_Z         , FLAG_N                  },
+#ifdef __ARM_ARCH_6M__
     {OP(0xD, 2, 1), 0x80000000, 0x00000001, 0x80000000, FLAG_Z         , FLAG_N                  },
+#else
+    {OP(0xD, 2, 1), 0x80000000, 0x00000001, 0x80000000, FLAG_Z         , FLAG_C | FLAG_N         },
+#endif
     {OP(0xD, 2, 1), 0x00000001, 0xFFFFFFFF, 0xFFFFFFFF, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0x00000002, 0x30000000, 0x60000000, FLAG_Z         , 0                       }, // 2 * n
@@ -505,7 +513,11 @@ static const struct TestInfo dp_tests[] = {
     {OP(0xD, 2, 1), 0x00000002, 0x7FFFFFFF, 0xFFFFFFFE, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0x7FFFFFFF, 0x00000002, 0xFFFFFFFE, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0x00000002, 0x80000000, 0x00000000, FLAG_N         , FLAG_Z                  },
+#ifdef __ARM_ARCH_6M__
     {OP(0xD, 2, 1), 0x80000000, 0x00000002, 0x00000000, FLAG_N         , FLAG_Z                  },
+#else
+    {OP(0xD, 2, 1), 0x80000000, 0x00000002, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         },
+#endif
     {OP(0xD, 2, 1), 0x00000002, 0xFFFFFFFF, 0xFFFFFFFE, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0x00000002, 0xFFFFFFFE, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0x00000003, 0x30000000, 0x90000000, FLAG_Z         , FLAG_N                  }, // 3 * n
@@ -513,10 +525,18 @@ static const struct TestInfo dp_tests[] = {
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0x7FFFFFFF, 0x80000001, FLAG_Z         , FLAG_N                  }, // -1 * n
     {OP(0xD, 2, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000001, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0x80000000, 0x80000000, FLAG_Z         , FLAG_N                  },
+#ifdef __ARM_ARCH_6M__
     {OP(0xD, 2, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, FLAG_Z         , FLAG_N                  },
+#else
+    {OP(0xD, 2, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, FLAG_Z         , FLAG_C | FLAG_N         },
+#endif
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000001, FLAG_Z         , 0                       },
     {OP(0xD, 2, 1), 0x01234567, 0x89ABCDEF, 0xC94E4629, FLAG_Z         , FLAG_N                  }, // extras
+#ifdef __ARM_ARCH_6M__
     {OP(0xD, 2, 1), 0x89ABCDEF, 0x01234567, 0xC94E4629, FLAG_Z         , FLAG_N                  },
+#else
+    {OP(0xD, 2, 1), 0x89ABCDEF, 0x01234567, 0xC94E4629, FLAG_Z         , FLAG_C | FLAG_N         },
+#endif
 
     // BIC r1 r2
     {OP(0xE, 2, 1), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 305
