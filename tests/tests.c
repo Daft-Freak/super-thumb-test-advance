@@ -2,6 +2,9 @@
 #include "tests_common.h"
 #include "load_store_tests.h"
 
+#ifdef TARGET_32BLIT_HW
+__attribute__((section(".data"))) // bss would be an entirely separate memory region
+#endif
 _Alignas(4) uint16_t code_buf[32];
 
 // test list
@@ -929,6 +932,9 @@ static const int num_reverse_tests = sizeof(reverse_tests) / sizeof(reverse_test
 #if defined(PICO_BUILD)
 #include <pico.h>
 #define in_ram(fn) __not_in_flash_func(fn)
+#elif defined(TARGET_32BLIT_HW)
+// best we can do, but we also need to move the test buffer
+#define in_ram(fn) __attribute__((section(".data.f"))) fn
 #else
 #error need to place helper in ram
 #endif
