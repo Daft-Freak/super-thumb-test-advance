@@ -824,6 +824,60 @@ static const struct TestInfo sp_offset_tests[] = {
 
 static const int num_sp_offset_tests = sizeof(sp_offset_tests) / sizeof(sp_offset_tests[0]);
 
+// v6+ only tests
+#ifdef __ARM_ARCH_6M__
+
+#define OP(op, rm, rd) (0xB200 | op <<  6 | rm << 3 | rd)
+
+// none of these affect flags
+static const struct TestInfo extend_tests[] = {
+    // SXTH r0 r1
+    {OP(0, 1, 0), 0x12340000, 0, 0x00000000, 0              , 0       }, // 0
+    {OP(0, 1, 0), 0x89AB0000, 0, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(0, 1, 0), 0x123400FF, 0, 0x000000FF, 0              , 0       },
+    {OP(0, 1, 0), 0x89AB00FF, 0, 0x000000FF, PSR_MASK       , PSR_MASK},
+    {OP(0, 1, 0), 0x12347FFF, 0, 0x00007FFF, 0              , 0       },
+    {OP(0, 1, 0), 0x89AB7FFF, 0, 0x00007FFF, PSR_MASK       , PSR_MASK},
+    {OP(0, 1, 0), 0x12348000, 0, 0xFFFF8000, 0              , 0       },
+    {OP(0, 1, 0), 0x89AB8000, 0, 0xFFFF8000, PSR_MASK       , PSR_MASK},
+
+    // SXTB r0 r1
+    {OP(1, 1, 0), 0x12345600, 0, 0x00000000, 0              , 0       }, // 8
+    {OP(1, 1, 0), 0x89ABCD00, 0, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(1, 1, 0), 0x1234560F, 0, 0x0000000F, 0              , 0       },
+    {OP(1, 1, 0), 0x89ABCD0F, 0, 0x0000000F, PSR_MASK       , PSR_MASK},
+    {OP(1, 1, 0), 0x1234567F, 0, 0x0000007F, 0              , 0       },
+    {OP(1, 1, 0), 0x89ABCD7F, 0, 0x0000007F, PSR_MASK       , PSR_MASK},
+    {OP(1, 1, 0), 0x12345680, 0, 0xFFFFFF80, 0              , 0       },
+    {OP(1, 1, 0), 0x89ABCD80, 0, 0xFFFFFF80, PSR_MASK       , PSR_MASK},
+
+    // UXTH r0 r1
+    {OP(2, 1, 0), 0x12340000, 0, 0x00000000, 0              , 0       }, // 16
+    {OP(2, 1, 0), 0x89AB0000, 0, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(2, 1, 0), 0x123400FF, 0, 0x000000FF, 0              , 0       },
+    {OP(2, 1, 0), 0x89AB00FF, 0, 0x000000FF, PSR_MASK       , PSR_MASK},
+    {OP(2, 1, 0), 0x12347FFF, 0, 0x00007FFF, 0              , 0       },
+    {OP(2, 1, 0), 0x89AB7FFF, 0, 0x00007FFF, PSR_MASK       , PSR_MASK},
+    {OP(2, 1, 0), 0x12348000, 0, 0x00008000, 0              , 0       },
+    {OP(2, 1, 0), 0x89AB8000, 0, 0x00008000, PSR_MASK       , PSR_MASK},
+
+    // UXTB r0 r1
+    {OP(3, 1, 0), 0x12345600, 0, 0x00000000, 0              , 0       }, // 24
+    {OP(3, 1, 0), 0x89ABCD00, 0, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x1234560F, 0, 0x0000000F, 0              , 0       },
+    {OP(3, 1, 0), 0x89ABCD0F, 0, 0x0000000F, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x1234567F, 0, 0x0000007F, 0              , 0       },
+    {OP(3, 1, 0), 0x89ABCD7F, 0, 0x0000007F, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x12345680, 0, 0x00000080, 0              , 0       },
+    {OP(3, 1, 0), 0x89ABCD80, 0, 0x00000080, PSR_MASK       , PSR_MASK},
+};
+
+#undef OP
+
+static const int num_extend_tests = sizeof(extend_tests) / sizeof(extend_tests[0]);
+
+#endif
+
 #ifdef __ARM_ARCH_6M__
 
 #if defined(PICO_BUILD)
@@ -1198,6 +1252,10 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_test_list(group_cb, fail_cb, sp_offset_tests, num_sp_offset_tests, "spoff", 13, false) && ret;
     ret = run_push_pop_tests(group_cb, fail_cb, "pushpop") && ret;
     ret = run_ldm_stm_tests(group_cb, fail_cb, "ldmstm") && ret;
+
+#ifdef __ARM_ARCH_6M__
+    ret = run_test_list(group_cb, fail_cb, extend_tests, num_extend_tests, "*xt*", 0,  false);
+#endif
 
     return ret;
 }
