@@ -28,3 +28,5 @@ extern uint16_t code_buf[32];
 
 void set_cpsr(uint32_t v);
 uint32_t get_cpsr_arm();
+
+void invalidate_icache();

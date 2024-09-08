@@ -980,6 +980,21 @@ uint32_t get_cpsr_arm() {
 
 #endif
 
+void invalidate_icache() {
+#ifdef __ARM_ARCH_7EM__
+    // specifically cortex-m7
+    volatile uint32_t *scb_iciallu = (volatile uint32_t *)(0xE000E000 + 0x0D00 + 0x250);
+
+    asm volatile ("dsb 0xF":::"memory");
+    asm volatile ("isb 0xF":::"memory");
+
+    *scb_iciallu = 0;
+
+    asm volatile ("dsb 0xF":::"memory");
+    asm volatile ("isb 0xF":::"memory");
+#endif
+}
+
 bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo *tests, int num_tests, const char *label, int dest, bool flags_for_val) {
 
     bool res = true;
@@ -1023,6 +1038,7 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
             *ptr++ = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+        invalidate_icache();
 
         uint32_t in0 = flags_for_val ? (test->psr_in | psr_save) : 0xBAD;
 
@@ -1048,6 +1064,8 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
         code_buf[5] = 0x4686; // mov lr r0
         code_buf[6] = 0x4718; // bx r3
 
+        invalidate_icache();
+
         out = func(test->psr_in | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
         out &= PSR_MASK;
 
@@ -1071,6 +1089,8 @@ bool run_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct Te
             code_buf[8] = 0x3001; // add r0 1
 
             code_buf[9] = 0xBD00; // pop pc
+
+            invalidate_icache();
 
             out = func(test->psr_in | psr_save, test->m_in, test->n_in, 0x3BAD);
 
@@ -1136,6 +1156,7 @@ bool run_hi_reg_tests(GroupCallback group_cb, FailCallback fail_cb, const struct
         *ptr++ = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+        invalidate_icache();
 
         uint32_t out = func(0xBAD, test->m_in, test->n_in, 0x3BAD);
 
@@ -1173,6 +1194,8 @@ bool run_hi_reg_tests(GroupCallback group_cb, FailCallback fail_cb, const struct
         *ptr++ = 0x4686; // mov lr r0
         *ptr++ = 0x4718; // bx r3
 
+        invalidate_icache();
+
         out = func(test->psr_in | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
         out &= PSR_MASK;
 
@@ -1203,6 +1226,7 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     uint16_t *end_ptr = ptr;
 
     TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+    invalidate_icache();
 
     uint32_t out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
 
@@ -1217,6 +1241,8 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     i++;
     code_buf[0] = OP(0, 0, 1); // r0 pc 4
 
+    invalidate_icache();
+
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = (uintptr_t)code_buf + 8;
 
@@ -1228,6 +1254,8 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     // big offset
     i++;
     code_buf[0] = OP(0, 0, 0xFF); // r0 pc 1020
+
+    invalidate_icache();
 
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = (uintptr_t)code_buf + 1024;
@@ -1248,6 +1276,8 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     i++;
     code_buf[0] = OP(1, 0, 0); // r0 sp 0
 
+    invalidate_icache();
+
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = spIn;
 
@@ -1260,6 +1290,8 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     i++;
     code_buf[0] = OP(1, 0, 1); // r0 sp 4
 
+    invalidate_icache();
+
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = spIn + 4;
 
@@ -1271,6 +1303,8 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     // big offset
     i++;
     code_buf[0] = OP(1, 0, 0xFF); // r0 sp 1020
+
+    invalidate_icache();
 
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = spIn + 1020;

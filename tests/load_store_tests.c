@@ -332,6 +332,7 @@ static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, 
     uint16_t *end_ptr = ptr;
 
     TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+    invalidate_icache();
 
     uint32_t out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
 
@@ -362,6 +363,8 @@ static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, 
     code_buf[0] = 0;
     code_buf[1] = OP(0, 0); // r0 0
 
+    invalidate_icache();
+
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = 0x01234770;
 
@@ -373,6 +376,8 @@ static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, 
     // ... and with an offset again
     i++;
     code_buf[1] = OP(0, 1); // r0 4
+
+    invalidate_icache();
 
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = 0x89AB4567;
@@ -411,6 +416,8 @@ static bool run_load_store_tests(GroupCallback group_cb, FailCallback fail_cb, c
         *ptr++ = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        invalidate_icache();
 
         uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
 
@@ -457,6 +464,8 @@ static bool run_sp_rel_load_store_tests(GroupCallback group_cb, FailCallback fai
         *ptr++ = 0x4770; // BX LR
 
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        invalidate_icache();
 
         uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
 
@@ -521,6 +530,8 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
 
         *ptr++ = 0x4770; // BX LR
 
+        invalidate_icache();
+
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
         if(out != expected[j]) {
@@ -547,6 +558,8 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
         *ptr++ = OP(1, 0, 0xF); // pop r0-3
 
         *ptr++ = 0x4770; // BX LR
+
+        invalidate_icache();
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -580,6 +593,8 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
 
         *ptr++ = 0x4770; // BX LR
 
+        invalidate_icache();
+
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
         if(out != expected[j]) {
@@ -601,6 +616,8 @@ bool run_push_pop_tests(GroupCallback group_cb, FailCallback fail_cb, const char
 
     *ptr++ = 0x469D; // mov sp r3
     *ptr++ = 0x4770; // BX LR
+
+    invalidate_icache();
 
     uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -651,6 +668,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
         *ptr++ = 0xBC80; // pop r7
         *ptr++ = 0x4770; // BX LR
 
+        invalidate_icache();
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -681,6 +699,8 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
 
         *ptr++ = 0xBC80; // pop r7
         *ptr++ = 0x4770; // BX LR
+
+        invalidate_icache();
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -714,6 +734,8 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
 
         *ptr++ = 0xBC80; // pop r7
         *ptr++ = 0x4770; // BX LR
+
+        invalidate_icache();
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
@@ -757,6 +779,8 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
 
         *ptr++ = 0xBC80; // pop r7
         *ptr++ = 0x4770; // BX LR
+
+        invalidate_icache();
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
         
