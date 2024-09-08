@@ -717,7 +717,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
         uint32_t expected = spIn - 20; // always overwrites
 #else
         uint32_t expected = j == 0 ? spIn - 20 : spIn - 4; // overwrites if not first reg
@@ -778,7 +778,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
 
     *ptr++ = OP(0, 7, 0); // stmia r7 nothing
 
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     *ptr++ = 0x3F04; // sub r7 4
 #else
     *ptr++ = 0x3F40; // sub r7 64
@@ -789,7 +789,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
     *ptr++ = 0xBD80; // pop r7, lr
 
     uint32_t out = func(values[0], values[1], values[2], values[3]);
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     uint32_t expected = values[1]; // stores lr
 #else
     uint32_t expected = (uintptr_t)code_buf + 14; // stores pc
@@ -812,7 +812,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
     ptr = code_buf;
     *ptr++ = 0xB480; // push r7
 
-#ifdef __ARM_ARCH_6M__ // pop interworks so need to make sure the bit is set
+#if __ARM_ARCH >= 6// pop interworks so need to make sure the bit is set
     *ptr++ = 0xA003; // add r0 pc 12
     *ptr++ = 0x3801; // sub r0 1 (need to -2 then +1)
 #else
@@ -835,7 +835,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
 
     out = func(values[0], values[1], values[2], values[3]);
 
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     expected = spIn - 8/*2x push*/; // does not adjust base
 #else
     expected = spIn - 8/*2x push*/ + 64; // adds 64 to base

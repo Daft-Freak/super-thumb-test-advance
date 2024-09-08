@@ -486,7 +486,7 @@ static const struct TestInfo dp_tests[] = {
     // MUL r1 r2
     // carry is a "meaningless value" (v4)
     {OP(0xD, 2, 1), 0x00000000, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 273
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     {OP(0xD, 2, 1), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
 #else
     {OP(0xD, 2, 1), 0x00000000, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_Z         },
@@ -499,7 +499,7 @@ static const struct TestInfo dp_tests[] = {
     {OP(0xD, 2, 1), 0x00000001, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_N         , 0                       },
     {OP(0xD, 2, 1), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFF, FLAG_Z         , 0                       },
     {OP(0xD, 2, 1), 0x00000001, 0x80000000, 0x80000000, FLAG_Z         , FLAG_N                  },
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     {OP(0xD, 2, 1), 0x80000000, 0x00000001, 0x80000000, FLAG_Z         , FLAG_N                  },
 #else
     {OP(0xD, 2, 1), 0x80000000, 0x00000001, 0x80000000, FLAG_Z         , FLAG_C | FLAG_N         },
@@ -513,7 +513,7 @@ static const struct TestInfo dp_tests[] = {
     {OP(0xD, 2, 1), 0x00000002, 0x7FFFFFFF, 0xFFFFFFFE, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0x7FFFFFFF, 0x00000002, 0xFFFFFFFE, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0x00000002, 0x80000000, 0x00000000, FLAG_N         , FLAG_Z                  },
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     {OP(0xD, 2, 1), 0x80000000, 0x00000002, 0x00000000, FLAG_N         , FLAG_Z                  },
 #else
     {OP(0xD, 2, 1), 0x80000000, 0x00000002, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         },
@@ -525,14 +525,14 @@ static const struct TestInfo dp_tests[] = {
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0x7FFFFFFF, 0x80000001, FLAG_Z         , FLAG_N                  }, // -1 * n
     {OP(0xD, 2, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000001, FLAG_Z         , FLAG_N                  },
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0x80000000, 0x80000000, FLAG_Z         , FLAG_N                  },
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     {OP(0xD, 2, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, FLAG_Z         , FLAG_N                  },
 #else
     {OP(0xD, 2, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, FLAG_Z         , FLAG_C | FLAG_N         },
 #endif
     {OP(0xD, 2, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000001, FLAG_Z         , 0                       },
     {OP(0xD, 2, 1), 0x01234567, 0x89ABCDEF, 0xC94E4629, FLAG_Z         , FLAG_N                  }, // extras
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     {OP(0xD, 2, 1), 0x89ABCDEF, 0x01234567, 0xC94E4629, FLAG_Z         , FLAG_N                  },
 #else
     {OP(0xD, 2, 1), 0x89ABCDEF, 0x01234567, 0xC94E4629, FLAG_Z         , FLAG_C | FLAG_N         },
@@ -766,7 +766,7 @@ static const struct TestInfo sp_offset_tests[] = {
     {OP(0, 0x01), 0x00000004, NO_SRC2, 0x00000008, 0, 0},
     {OP(0, 0x7F), 0x00000004, NO_SRC2, 0x00000200, 0, 0},
 
-#ifdef __ARM_ARCH_6M__ // can't have unaligned SP
+#if __ARM_ARCH >= 6 // can't have unaligned SP
     {OP(0, 0x00), 0x00000001, NO_SRC2, 0x00000000, 0, 0},
     {OP(0, 0x01), 0x00000001, NO_SRC2, 0x00000004, 0, 0},
     {OP(0, 0x7F), 0x00000001, NO_SRC2, 0x000001FC, 0, 0},
@@ -790,7 +790,7 @@ static const struct TestInfo sp_offset_tests[] = {
     {OP(1, 0x01), 0x00000004, NO_SRC2, 0x00000000, 0, 0},
     {OP(1, 0x7F), 0x00000004, NO_SRC2, 0xFFFFFE08, 0, 0},
 
-#ifdef __ARM_ARCH_6M__ // can't have unaligned SP
+#if __ARM_ARCH >= 6 // can't have unaligned SP
     {OP(1, 0x00), 0x00000001, NO_SRC2, 0x00000000, 0, 0},
     {OP(1, 0x01), 0x00000001, NO_SRC2, 0xFFFFFFFC, 0, 0},
     {OP(1, 0x7F), 0x00000001, NO_SRC2, 0xFFFFFE04, 0, 0},
@@ -808,7 +808,7 @@ static const struct TestInfo sp_offset_tests[] = {
 
     // some extras with hireg add
     {0x4495     , 0x00000000, 0x00000004, 0x00000004, 0, 0}, // 24
-#ifdef __ARM_ARCH_6M__ // can't have unaligned SP
+#if __ARM_ARCH >= 6 // can't have unaligned SP
     {0x4495     , 0x00000000, 0x00000002, 0x00000000, 0, 0},
     {0x4495     , 0x00000003, 0x00000001, 0x00000000, 0, 0},
     {0x4495     , 0x00000002, 0x00000002, 0x00000000, 0, 0},
@@ -825,7 +825,7 @@ static const struct TestInfo sp_offset_tests[] = {
 static const int num_sp_offset_tests = sizeof(sp_offset_tests) / sizeof(sp_offset_tests[0]);
 
 // v6+ only tests
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
 
 #define OP(op, rm, rd) (0xB200 | op <<  6 | rm << 3 | rd)
 
@@ -924,7 +924,7 @@ static const int num_reverse_tests = sizeof(reverse_tests) / sizeof(reverse_test
 
 #endif
 
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
 
 #if defined(PICO_BUILD)
 #include <pico.h>
@@ -1299,7 +1299,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_push_pop_tests(group_cb, fail_cb, "pushpop") && ret;
     ret = run_ldm_stm_tests(group_cb, fail_cb, "ldmstm") && ret;
 
-#ifdef __ARM_ARCH_6M__
+#if __ARM_ARCH >= 6
     ret = run_test_list(group_cb, fail_cb, extend_tests, num_extend_tests, "*xt*", 0,  false);
     ret = run_test_list(group_cb, fail_cb, reverse_tests, num_reverse_tests, "rev", 0,  false);
 #endif
