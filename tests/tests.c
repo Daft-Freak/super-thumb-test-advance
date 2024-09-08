@@ -827,7 +827,7 @@ static const int num_sp_offset_tests = sizeof(sp_offset_tests) / sizeof(sp_offse
 #ifdef __ARM_ARCH_6M__
 
 #if defined(PICO_BUILD)
-#include <pico/platform.h>
+#include <pico.h>
 #define in_ram(fn) __not_in_flash_func(fn)
 #else
 #error need to place helper in ram
