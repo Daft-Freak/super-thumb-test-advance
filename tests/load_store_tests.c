@@ -14,7 +14,7 @@ const struct TestInfo load_reg_tests[] = {
     {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x89ABCDEF, 0, 0},
     {OP(0, 1, 2, 0), 0xFFFFFFFC, test_data_addr + 4, 0x01234567, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP(0, 1, 2, 0), 0x00000001, test_data_addr    , 0x67012345, 0, 0},
     {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x67012345, 0, 0},
@@ -51,7 +51,7 @@ static const struct TestInfo store_reg_tests[] = {
     {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x7E57DA7A, 0, 0},
     {OP(0, 1, 2, 0), 0xFFFFFFFC, test_data_addr + 4, 0x7E57DA7A, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP(0, 1, 2, 0), 0x00000001, test_data_addr    , 0x7E57DA7A, 0, 0},
     {OP(0, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x7E57DA7A, 0, 0},
@@ -90,7 +90,7 @@ static const struct TestInfo load_sign_ex_tests[] = {
     {OP(1, 0, 1, 2, 0), 0x00000000, test_data_addr + 4, 0x0000CDEF, 0, 0},
     {OP(1, 0, 1, 2, 0), 0xFFFFFFFE, test_data_addr + 2, 0x00004567, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP(1, 0, 1, 2, 0), 0x00000001, test_data_addr    , 0x67000045, 0, 0},
     {OP(1, 0, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x67000045, 0, 0},
@@ -121,7 +121,7 @@ static const struct TestInfo load_sign_ex_tests[] = {
     {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 4, 0xFFFFCDEF, 0, 0},
     {OP(1, 1, 1, 2, 0), 0xFFFFFFFE, test_data_addr + 2, 0x00004567, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP(1, 1, 1, 2, 0), 0x00000001, test_data_addr    , 0x00000045, 0, 0},
     {OP(1, 1, 1, 2, 0), 0x00000000, test_data_addr + 1, 0x00000045, 0, 0},
@@ -149,7 +149,7 @@ static const struct TestInfo store_half_reg_tests[] = {
     {OP(1, 2, 0), 0x00000000, test_data_addr + 4, 0x89ABDA7A, 0, 0},
     {OP(1, 2, 0), 0xFFFFFFFE, test_data_addr + 2, 0x0123DA7A, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP(1, 2, 0), 0x00000001, test_data_addr    , 0x0123DA7A, 0, 0},
     {OP(1, 2, 0), 0x00000000, test_data_addr + 1, 0x0123DA7A, 0, 0},
@@ -173,7 +173,7 @@ static const struct TestInfo load_imm_off_tests[] = {
     {OP_W(1, 2, 0), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0, 0},
     {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x67012345, 0, 0},
     {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x45670123, 0, 0},
@@ -198,7 +198,7 @@ static const struct TestInfo load_imm_off_tests[] = {
     {OP_H(2, 2, 0), NO_SRC1, test_data_addr    , 0x0000CDEF, 0, 0},
     {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x0000CDEF, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x67000045, 0, 0},
     {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x23000001, 0, 0},
@@ -223,7 +223,7 @@ static const struct TestInfo store_imm_off_tests[] = {
     {OP_W(1, 2, 0), 4, test_data_addr    , 0x7E57DA7A, 0, 0},
     {OP_W(0, 2, 0), 0, test_data_addr + 4, 0x7E57DA7A, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP_W(0, 2, 0), 0, test_data_addr + 1, 0x7E57DA7A, 0, 0},
     {OP_W(0, 2, 0), 0, test_data_addr + 2, 0x7E57DA7A, 0, 0},
@@ -248,7 +248,7 @@ static const struct TestInfo store_imm_off_tests[] = {
     {OP_H(2, 2, 0), 4, test_data_addr    , 0x89ABDA7A, 0, 0},
     {OP_H(0, 2, 0), 0, test_data_addr + 4, 0x89ABDA7A, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP_H(0, 2, 0), 0, test_data_addr + 1, 0x0123DA7A, 0, 0},
     {OP_H(0, 2, 0), 0, test_data_addr + 3, 0xDA7A4567, 0, 0},
@@ -271,7 +271,7 @@ static const struct TestInfo load_sp_rel_tests[] = {
     {OP(1, 0), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0, 0},
     {OP(0, 0), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP(0, 0), NO_SRC1, test_data_addr + 1, 0x67012345, 0, 0},
     {OP(0, 0), NO_SRC1, test_data_addr + 2, 0x45670123, 0, 0},
@@ -294,7 +294,7 @@ static const struct TestInfo store_sp_rel_tests[] = {
     {OP(1, 0), 4, test_data_addr    , 0x7E57DA7A, 0, 0},
     {OP(0, 0), 0, test_data_addr + 4, 0x7E57DA7A, 0, 0},
 
-#ifndef __ARM_ARCH_6M__ // fault (maybe test that they do?)
+#if __ARM_ARCH == 4
     // misaligned
     {OP(0, 0), 0, test_data_addr + 1, 0x7E57DA7A, 0, 0},
     {OP(0, 0), 0, test_data_addr + 2, 0x7E57DA7A, 0, 0},
@@ -848,7 +848,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
     i++;
 
     // unaligned base (18)
-#ifndef __ARM_ARCH_6M__ // faults
+#if __ARM_ARCH == 4
     // has no effect
     ptr = code_buf;
     *ptr++ = 0xB480; // push r7
