@@ -876,6 +876,52 @@ static const struct TestInfo extend_tests[] = {
 
 static const int num_extend_tests = sizeof(extend_tests) / sizeof(extend_tests[0]);
 
+#define OP(op, rm, rd) (0xBA00 | op <<  6 | rm << 3 | rd)
+
+// none of these affect flags
+static const struct TestInfo reverse_tests[] = {
+    // REV r0 r1
+    {OP(0, 1, 0), 0x01234567, 0, 0x67452301, 0              , 0       }, // 0
+    {OP(0, 1, 0), 0x01234567, 0, 0x67452301, PSR_MASK       , PSR_MASK},
+    {OP(0, 1, 0), 0x67452301, 0, 0x01234567, 0              , 0       },
+    {OP(0, 1, 0), 0x67452301, 0, 0x01234567, PSR_MASK       , PSR_MASK},
+    {OP(0, 1, 0), 0x89ABCDEF, 0, 0xEFCDAB89, 0              , 0       },
+    {OP(0, 1, 0), 0x89ABCDEF, 0, 0xEFCDAB89, PSR_MASK       , PSR_MASK},
+    {OP(0, 1, 0), 0xEFCDAB89, 0, 0x89ABCDEF, 0              , 0       },
+    {OP(0, 1, 0), 0xEFCDAB89, 0, 0x89ABCDEF, PSR_MASK       , PSR_MASK},
+
+    // REV16 r0 r1
+    {OP(1, 1, 0), 0x01234567, 0, 0x23016745, 0              , 0       }, // 8
+    {OP(1, 1, 0), 0x01234567, 0, 0x23016745, PSR_MASK       , PSR_MASK},
+    {OP(1, 1, 0), 0x23016745, 0, 0x01234567, 0              , 0       },
+    {OP(1, 1, 0), 0x23016745, 0, 0x01234567, PSR_MASK       , PSR_MASK},
+    {OP(1, 1, 0), 0x89ABCDEF, 0, 0xAB89EFCD, 0              , 0       },
+    {OP(1, 1, 0), 0x89ABCDEF, 0, 0xAB89EFCD, PSR_MASK       , PSR_MASK},
+    {OP(1, 1, 0), 0xAB89EFCD, 0, 0x89ABCDEF, 0              , 0       },
+    {OP(1, 1, 0), 0xAB89EFCD, 0, 0x89ABCDEF, PSR_MASK       , PSR_MASK},
+
+    // 2 is invalid
+
+    // REVSH r0 r1
+    {OP(3, 1, 0), 0x01234567, 0, 0x00006745, 0              , 0       }, // 16
+    {OP(3, 1, 0), 0x01234567, 0, 0x00006745, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x23016745, 0, 0x00004567, 0              , 0       },
+    {OP(3, 1, 0), 0x23016745, 0, 0x00004567, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x01236789, 0, 0xFFFF8967, 0              , 0       },
+    {OP(3, 1, 0), 0x01236789, 0, 0xFFFF8967, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x23018967, 0, 0x00006789, 0              , 0       },
+    {OP(3, 1, 0), 0x23018967, 0, 0x00006789, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x89AB0123, 0, 0x00002301, 0              , 0       },
+    {OP(3, 1, 0), 0x89AB0123, 0, 0x00002301, PSR_MASK       , PSR_MASK},
+    {OP(3, 1, 0), 0x89ABCDEF, 0, 0xFFFFEFCD, 0              , 0       },
+    {OP(3, 1, 0), 0x89ABCDEF, 0, 0xFFFFEFCD, PSR_MASK       , PSR_MASK},
+};
+
+#undef OP
+
+static const int num_reverse_tests = sizeof(reverse_tests) / sizeof(reverse_tests[0]);
+
+
 #endif
 
 #ifdef __ARM_ARCH_6M__
@@ -1255,6 +1301,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
 #ifdef __ARM_ARCH_6M__
     ret = run_test_list(group_cb, fail_cb, extend_tests, num_extend_tests, "*xt*", 0,  false);
+    ret = run_test_list(group_cb, fail_cb, reverse_tests, num_reverse_tests, "rev", 0,  false);
 #endif
 
     return ret;
