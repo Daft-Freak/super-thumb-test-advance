@@ -766,6 +766,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
         }
     }
 
+#if __ARM_ARCH < 7
     // stm empty list (16)
     // stores pc or lr
     uint16_t *ptr = code_buf;
@@ -846,6 +847,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
         fail_cb(i, out, expected);
     }
     i++;
+#endif
 
     // unaligned base (18)
 #if __ARM_ARCH == 4
