@@ -346,6 +346,7 @@ static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, 
     // now with an offset
     i++;
     code_buf[0] = OP(0, 1); // r0 4
+    invalidate_icache();
 
     out = func(0xBAD, 0x1BAD, 0x2BAD, 0x3BAD);
     expected = 0xCDEF89AB;
