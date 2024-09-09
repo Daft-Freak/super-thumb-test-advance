@@ -511,6 +511,186 @@ static const struct TestInfo32 store_imm12_off_thumb2_tests[] = {
 
 static const int num_store_imm12_off_thumb2_tests = sizeof(store_imm12_off_thumb2_tests) / sizeof(store_imm12_off_thumb2_tests[0]);
 
+// load, register offset
+// these have an extra shift
+
+#define OP_W(ro, rb, rd, shift) (0xF8500000 | rb << 16 | rd << 12 | shift << 4 | ro)
+#define OP_B(ro, rb, rd, shift) (0xF8100000 | rb << 16 | rd << 12 | shift << 4 | ro)
+#define OP_H(ro, rb, rd, shift) (0xF8300000 | rb << 16 | rd << 12 | shift << 4 | ro)
+
+#define OP_SB(ro, rb, rd, shift) (0xF9100000 | rb << 16 | rd << 12 | shift << 4 | ro)
+#define OP_SH(ro, rb, rd, shift) (0xF9300000 | rb << 16 | rd << 12 | shift << 4 | ro)
+
+const struct TestInfo32 load_reg_thumb2_tests[] = {
+    // ldr r0 [r2 r1]
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x01234567, 0, 0}, // 0
+    {OP_W(1, 2, 0, 0), 0x00000004, test_data_addr    , 0x89ABCDEF, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0x89ABCDEF, 0, 0},
+    // shifted offset
+    {OP_W(1, 2, 0, 2), 0x00000001, test_data_addr    , 0x89ABCDEF, 0, 0},
+    {OP_W(1, 2, 0, 3), 0x00000001, test_data_addr    , 0xFEDCBA98, 0, 0},
+    // negative offset
+    {OP_W(1, 2, 0, 0), 0xFFFFFFFC, test_data_addr + 4, 0x01234567, 0, 0},
+    {OP_W(1, 2, 0, 2), 0xFFFFFFFF, test_data_addr + 4, 0x01234567, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_W(1, 2, 0, 0), 0x00000001, test_data_addr    , 0xEF012345, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0xEF012345, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000002, test_data_addr    , 0xCDEF0123, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0xCDEF0123, 0, 0},
+    {OP_W(1, 2, 0, 1), 0x00000001, test_data_addr    , 0xCDEF0123, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000003, test_data_addr    , 0xABCDEF01, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0xABCDEF01, 0, 0},
+#endif
+
+    // ldrb r0 [r2 r1]
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x00000067, 0, 0}, // 14
+    {OP_B(1, 2, 0, 0), 0x00000001, test_data_addr    , 0x00000045, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000002, test_data_addr    , 0x00000023, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0x00000023, 0, 0},
+    {OP_B(1, 2, 0, 1), 0x00000001, test_data_addr    , 0x00000023, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000003, test_data_addr    , 0x00000001, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0x00000001, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000004, test_data_addr    , 0x000000EF, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0x000000EF, 0, 0},
+    {OP_B(1, 2, 0, 2), 0x00000001, test_data_addr    , 0x000000EF, 0, 0},
+    {OP_B(1, 2, 0, 0), 0xFFFFFFFF, test_data_addr + 1, 0x00000067, 0, 0},
+
+    // ldrh r0 [r2 r1]
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x00004567, 0, 0}, // 26
+    {OP_H(1, 2, 0, 0), 0x00000002, test_data_addr    , 0x00000123, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0x00000123, 0, 0},
+    {OP_H(1, 2, 0, 1), 0x00000001, test_data_addr    , 0x00000123, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000004, test_data_addr    , 0x0000CDEF, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0x0000CDEF, 0, 0},
+    {OP_H(1, 2, 0, 2), 0x00000001, test_data_addr    , 0x0000CDEF, 0, 0},
+    {OP_H(1, 2, 0, 0), 0xFFFFFFFE, test_data_addr + 2, 0x00004567, 0, 0},
+    {OP_H(1, 2, 0, 1), 0xFFFFFFFF, test_data_addr + 2, 0x00004567, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_H(1, 2, 0, 0), 0x00000001, test_data_addr    , 0x00002345, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0x00002345, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000003, test_data_addr    , 0x0000EF01, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0x0000EF01, 0, 0},
+#endif
+
+    // ldsb r0 [r2 r1]
+    {OP_SB(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x00000067, 0, 0}, // 39
+    {OP_SB(1, 2, 0, 0), 0x00000001, test_data_addr    , 0x00000045, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000002, test_data_addr    , 0x00000023, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0x00000023, 0, 0},
+    {OP_SB(1, 2, 0, 1), 0x00000001, test_data_addr    , 0x00000023, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000003, test_data_addr    , 0x00000001, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0x00000001, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000004, test_data_addr    , 0xFFFFFFEF, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0xFFFFFFEF, 0, 0},
+    {OP_SB(1, 2, 0, 2), 0x00000001, test_data_addr    , 0xFFFFFFEF, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0xFFFFFFFF, test_data_addr + 1, 0x00000067, 0, 0},
+    // a few more that get extended
+    {OP_SB(1, 2, 0, 0), 0x00000006, test_data_addr    , 0xFFFFFFAB, 0, 0},
+    {OP_SB(1, 2, 0, 1), 0x00000003, test_data_addr    , 0xFFFFFFAB, 0, 0},
+    {OP_SB(1, 2, 0, 0), 0x00000008, test_data_addr    , 0xFFFFFF98, 0, 0},
+    {OP_SB(1, 2, 0, 3), 0x00000001, test_data_addr    , 0xFFFFFF98, 0, 0},
+
+    // ldsh r0 [r2 r1]
+    {OP_SH(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x00004567, 0, 0}, // 55
+    {OP_SH(1, 2, 0, 0), 0x00000002, test_data_addr    , 0x00000123, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0x00000123, 0, 0},
+    {OP_SH(1, 2, 0, 1), 0x00000001, test_data_addr    , 0x00000123, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0x00000004, test_data_addr    , 0xFFFFCDEF, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0xFFFFCDEF, 0, 0},
+    {OP_SH(1, 2, 0, 2), 0x00000001, test_data_addr    , 0xFFFFCDEF, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0xFFFFFFFE, test_data_addr + 2, 0x00004567, 0, 0},
+    {OP_SH(1, 2, 0, 1), 0xFFFFFFFF, test_data_addr + 2, 0x00004567, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_SH(1, 2, 0, 0), 0x00000001, test_data_addr    , 0x00002345, 0, 0}, // 64
+    {OP_SH(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0x00002345, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0x00000003, test_data_addr    , 0xFFFFEF01, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0xFFFFEF01, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0x00000000, test_data_addr + 5, 0xFFFFABCD, 0, 0},
+    {OP_SH(1, 2, 0, 0), 0x00000000, test_data_addr + 7, 0xFFFF9889, 0, 0},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+#undef OP_SB
+#undef OP_SH
+
+static const int num_load_reg_thumb2_tests = sizeof(load_reg_thumb2_tests) / sizeof(load_reg_thumb2_tests[0]);
+
+// store, register offset
+#define OP_W(ro, rb, rd, shift) (0xF8400000 | rb << 16 | rd << 12 | shift << 4 | ro)
+#define OP_B(ro, rb, rd, shift) (0xF8000000 | rb << 16 | rd << 12 | shift << 4 | ro)
+#define OP_H(ro, rb, rd, shift) (0xF8200000 | rb << 16 | rd << 12 | shift << 4 | ro)
+
+static const struct TestInfo32 store_reg_thumb2_tests[] = {
+    // str r0 [r2 r1]
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x7E57DA7A, 0, 0}, // 0
+    {OP_W(1, 2, 0, 0), 0x00000004, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+    {OP_W(1, 2, 0, 2), 0x00000001, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP_W(1, 2, 0, 0), 0xFFFFFFFC, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+    {OP_W(1, 2, 0, 2), 0xFFFFFFFF, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_W(1, 2, 0, 0), 0x00000001, test_data_addr    , 0x57DA7A67, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0x57DA7A67, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000002, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0xDA7A4567, 0, 0},
+    {OP_W(1, 2, 0, 1), 0x00000001, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000003, test_data_addr    , 0x7A234567, 0, 0},
+    {OP_W(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0x7A234567, 0, 0},
+#endif
+
+    // strb r0 [r2 r1]
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x0123457A, 0, 0}, // 13
+    {OP_B(1, 2, 0, 0), 0x00000001, test_data_addr    , 0x01237A67, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0x01237A67, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000002, test_data_addr    , 0x017A4567, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0x017A4567, 0, 0},
+    {OP_B(1, 2, 0, 1), 0x00000001, test_data_addr    , 0x017A4567, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000003, test_data_addr    , 0x7A234567, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0x7A234567, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000004, test_data_addr    , 0x89ABCD7A, 0, 0},
+    {OP_B(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0x89ABCD7A, 0, 0},
+    {OP_B(1, 2, 0, 2), 0x00000001, test_data_addr    , 0x89ABCD7A, 0, 0},
+    {OP_B(1, 2, 0, 0), 0xFFFFFFFF, test_data_addr + 1, 0x0123457A, 0, 0},
+
+    // strh r0 [r2 r1]
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr    , 0x0123DA7A, 0, 0}, // 24
+    {OP_H(1, 2, 0, 0), 0x00000002, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 2, 0xDA7A4567, 0, 0},
+    {OP_H(1, 2, 0, 1), 0x00000001, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000004, test_data_addr    , 0x89ABDA7A, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 4, 0x89ABDA7A, 0, 0},
+    {OP_H(1, 2, 0, 2), 0x00000001, test_data_addr    , 0x89ABDA7A, 0, 0},
+    {OP_H(1, 2, 0, 0), 0xFFFFFFFE, test_data_addr + 2, 0x0123DA7A, 0, 0},
+    {OP_H(1, 2, 0, 1), 0xFFFFFFFF, test_data_addr + 2, 0x0123DA7A, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_H(1, 2, 0, 0), 0x00000001, test_data_addr    , 0x01DA7A67, 0, 0}, // 33
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 1, 0x01DA7A67, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000003, test_data_addr    , 0x7A234567, 0, 0},
+    {OP_H(1, 2, 0, 0), 0x00000000, test_data_addr + 3, 0x7A234567, 0, 0},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+
+static const int num_store_reg_thumb2_tests = sizeof(store_reg_thumb2_tests) / sizeof(store_reg_thumb2_tests[0]);
+
 #endif
 
 static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
@@ -686,7 +866,7 @@ static bool run_sp_rel_load_store_tests(GroupCallback group_cb, FailCallback fai
 
 #if __ARM_ARCH >= 7
 
-static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, bool is_store) {
+static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, bool is_store, bool is_reg_offset) {
 
     bool res = true;
 
@@ -714,7 +894,13 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
 
         if(is_store) {
             // read back nearest word
-            int offset = (test->opcode & 0xFF); // offset
+            int offset;
+            
+            if(is_reg_offset)
+                offset = test->m_in << ((test->opcode >> 4) & 3); // offset from shifted reg
+            else
+                offset = test->opcode & 0xFF; // offset from imm
+
             uint32_t addr = (test->n_in + offset) & ~3;
             out = *(uint32_t *)addr; 
         }
@@ -739,10 +925,16 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
 
         uint32_t opcode = test->opcode | 0x00088000;
 
+        if(is_reg_offset)
+            opcode |= 8;
+
         *ptr++ = 0xE92D; // push
         *ptr++ = 0x0F00; // r8-11
 
         *ptr++ = 0x4692; // mov r10, r2
+
+        if(is_reg_offset)
+            *ptr++ = 0x4689; // mov r9, r1
 
         if(is_store)
             *ptr++ = 0x4680; // mov r8, r0
@@ -766,7 +958,13 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
 
         if(is_store) {
             // read back nearest word
-            int offset = (test->opcode & 0xFF); // offset
+            int offset;
+            
+            if(is_reg_offset)
+                offset = test->m_in << ((test->opcode >> 4) & 3); // offset from shifted reg
+            else
+                offset = test->opcode & 0xFF; // offset from imm
+
             uint32_t addr = (test->n_in + offset) & ~3;
             out = *(uint32_t *)addr; 
         }
@@ -796,8 +994,10 @@ bool run_single_load_store_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, store_sp_rel_tests, num_store_sp_rel_tests, "str.sp", true) && ret;
 
 #if __ARM_ARCH >= 7
-    ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_imm12_off_thumb2_tests, num_load_imm12_off_thumb2_tests, "ldr.imm12", false) && ret;
-    ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_imm12_off_thumb2_tests, num_store_imm12_off_thumb2_tests, "str.imm12", true) && ret;
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_imm12_off_thumb2_tests, num_load_imm12_off_thumb2_tests, "ldr.imm12", false, false) && ret;
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_imm12_off_thumb2_tests, num_store_imm12_off_thumb2_tests, "str.imm12", true, false) && ret;
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_reg_thumb2_tests, num_load_reg_thumb2_tests, "ldr.reg.t2", false, true) && ret;
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_reg_thumb2_tests, num_store_reg_thumb2_tests, "str.reg.t2", true, true) && ret;
 #endif
 
     return ret;
