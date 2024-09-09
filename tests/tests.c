@@ -1344,5 +1344,9 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_test_list(group_cb, fail_cb, reverse_tests, num_reverse_tests, "rev", 0,  false);
 #endif
 
+#if __ARM_ARCH >= 7
+    ret = run_ldm_stm_thumb2_tests(group_cb, fail_cb, "ldmstm.t2") && ret;
+#endif
+
     return ret;
 }
