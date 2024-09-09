@@ -22,6 +22,17 @@ struct TestInfo {
     uint32_t psr_in, psr_out;
 };
 
+// Thumb2
+struct TestInfo32 {
+    uint32_t opcode;
+
+    uint32_t m_in, n_in;
+
+    uint32_t d_out;
+
+    uint32_t psr_in, psr_out;
+};
+
 typedef uint32_t (*TestFunc)(uint32_t, uint32_t, uint32_t, uint32_t);
 
 extern uint16_t code_buf[32];

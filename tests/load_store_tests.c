@@ -360,6 +360,121 @@ static const struct TestInfo store_sp_rel_tests[] = {
 
 #undef OP
 
+#if __ARM_ARCH >= 7
+
+// load, 12-bit immediate offset
+// main difference here is that the offset is in bytes
+
+#define OP_W(off, rb, rd) (0xF8D00000 | rb << 16 | rd << 12 | off)
+#define OP_B(off, rb, rd) (0xF8900000 | rb << 16 | rd << 12 | off)
+#define OP_H(off, rb, rd) (0xF8B00000 | rb << 16 | rd << 12 | off)
+
+static const struct TestInfo32 load_imm12_off_thumb2_tests[] = {
+    // ldr r0 [r2 #imm]
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr    , 0x01234567, 0, 0}, // 0
+    {OP_W(4, 2, 0), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_W(1, 2, 0), NO_SRC1, test_data_addr    , 0xEF012345, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 1, 0xEF012345, 0, 0},
+    {OP_W(2, 2, 0), NO_SRC1, test_data_addr    , 0xCDEF0123, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 2, 0xCDEF0123, 0, 0},
+    {OP_W(3, 2, 0), NO_SRC1, test_data_addr    , 0xABCDEF01, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 3, 0xABCDEF01, 0, 0},
+#endif
+
+    // ldrb r0 [r2 #imm]
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr    , 0x00000067, 0, 0}, // 9
+    {OP_B(1, 2, 0), NO_SRC1, test_data_addr    , 0x00000045, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP_B(2, 2, 0), NO_SRC1, test_data_addr    , 0x00000023, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x00000023, 0, 0},
+    {OP_B(3, 2, 0), NO_SRC1, test_data_addr    , 0x00000001, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x00000001, 0, 0},
+    {OP_B(4, 2, 0), NO_SRC1, test_data_addr    , 0x000000EF, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x000000EF, 0, 0},
+
+    // ldrh r0 [r2 #imm]
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr    , 0x00004567, 0, 0}, // 18
+    {OP_H(2, 2, 0), NO_SRC1, test_data_addr    , 0x00000123, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x00000123, 0, 0},
+    {OP_H(4, 2, 0), NO_SRC1, test_data_addr    , 0x0000CDEF, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x0000CDEF, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_H(1, 2, 0), NO_SRC1, test_data_addr    , 0x00002345, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x00002345, 0, 0},
+    {OP_H(3, 2, 0), NO_SRC1, test_data_addr    , 0x0000EF01, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x0000EF01, 0, 0},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+
+static const int num_load_imm12_off_thumb2_tests = sizeof(load_imm12_off_thumb2_tests) / sizeof(load_imm12_off_thumb2_tests[0]);
+
+// store, 12-bit immediate offset
+
+#define OP_W(off, rb, rd) (0xF8C00000 | rb << 16 | rd << 12 | off)
+#define OP_B(off, rb, rd) (0xF8800000 | rb << 16 | rd << 12 | off)
+#define OP_H(off, rb, rd) (0xF8A00000 | rb << 16 | rd << 12 | off)
+
+static const struct TestInfo32 store_imm12_off_thumb2_tests[] = {
+    // str r0 [r2 #imm]
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0, 0}, // 0
+    {OP_W(4, 2, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_W(1, 2, 0), NO_SRC1, test_data_addr    , 0x57DA7A67, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x57DA7A67, 0, 0},
+    {OP_W(2, 2, 0), NO_SRC1, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 2, 0xDA7A4567, 0, 0},
+    {OP_W(3, 2, 0), NO_SRC1, test_data_addr    , 0x7A234567, 0, 0},
+    {OP_W(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x7A234567, 0, 0},
+#endif
+
+    // strb r0 [r2 #imm]
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr    , 0x0123457A, 0, 0}, // 9
+    {OP_B(1, 2, 0), NO_SRC1, test_data_addr    , 0x01237A67, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x01237A67, 0, 0},
+    {OP_B(2, 2, 0), NO_SRC1, test_data_addr    , 0x017A4567, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x017A4567, 0, 0},
+    {OP_B(3, 2, 0), NO_SRC1, test_data_addr    , 0x7A234567, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x7A234567, 0, 0},
+    {OP_B(4, 2, 0), NO_SRC1, test_data_addr    , 0x89ABCD7A, 0, 0},
+    {OP_B(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x89ABCD7A, 0, 0},
+
+    // strh r0 [r2 #imm]
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr    , 0x0123DA7A, 0, 0}, // 18
+    {OP_H(2, 2, 0), NO_SRC1, test_data_addr    , 0xDA7A4567, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 2, 0xDA7A4567, 0, 0},
+    {OP_H(4, 2, 0), NO_SRC1, test_data_addr    , 0x89ABDA7A, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 4, 0x89ABDA7A, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_H(1, 2, 0), NO_SRC1, test_data_addr    , 0x01DA7A67, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x01DA7A67, 0, 0},
+    {OP_H(3, 2, 0), NO_SRC1, test_data_addr    , 0x7A234567, 0, 0},
+    {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x7A234567, 0, 0},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+
+static const int num_store_imm12_off_thumb2_tests = sizeof(store_imm12_off_thumb2_tests) / sizeof(store_imm12_off_thumb2_tests[0]);
+
+#endif
+
 static const int num_store_sp_rel_tests = sizeof(store_sp_rel_tests) / sizeof(store_sp_rel_tests[0]);
 
 static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
@@ -541,6 +656,52 @@ static bool run_sp_rel_load_store_tests(GroupCallback group_cb, FailCallback fai
     return res;
 }
 
+#if __ARM_ARCH >= 7
+
+static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, bool is_store) {
+
+    bool res = true;
+
+    group_cb(label);
+
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo32 *test = &tests[i];
+
+        // init data
+        for(int i = 0; i < 4; i++)
+            test_data[i] = test_data_init[i];
+    
+        // value test
+        uint16_t *ptr = code_buf;
+
+        *ptr++ = test->opcode >> 16;
+        *ptr++ = test->opcode;
+        *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        invalidate_icache();
+
+        uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
+
+        if(is_store) {
+            // read back nearest word
+            int offset = (test->opcode & 0xFF); // offset
+            uint32_t addr = (test->n_in + offset) & ~3;
+            out = *(uint32_t *)addr; 
+        }
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(i, out, test->d_out);
+        }
+    }
+
+    return res;
+}
+
+#endif
+
 bool run_single_load_store_tests(GroupCallback group_cb, FailCallback fail_cb) {
     bool ret = true;
 
@@ -553,6 +714,11 @@ bool run_single_load_store_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_load_store_tests(group_cb, fail_cb, store_imm_off_tests, num_store_imm_off_tests, "str.imm", true) && ret;
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, load_sp_rel_tests, num_load_sp_rel_tests, "ldr.sp", false) && ret;
     ret = run_sp_rel_load_store_tests(group_cb, fail_cb, store_sp_rel_tests, num_store_sp_rel_tests, "str.sp", true) && ret;
+
+#if __ARM_ARCH >= 7
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_imm12_off_thumb2_tests, num_load_imm12_off_thumb2_tests, "ldr.imm12", false) && ret;
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_imm12_off_thumb2_tests, num_store_imm12_off_thumb2_tests, "str.imm12", true) && ret;
+#endif
 
     return ret;
 }
