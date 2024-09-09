@@ -570,10 +570,6 @@ static bool run_load_store_tests(GroupCallback group_cb, FailCallback fail_cb, c
 
     group_cb(label);
 
-    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
-
-    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
-
     for(int i = 0; i < num_tests; i++) {
         const struct TestInfo *test = &tests[i];
 
@@ -613,10 +609,6 @@ static bool run_sp_rel_load_store_tests(GroupCallback group_cb, FailCallback fai
     bool res = true;
 
     group_cb(label);
-
-    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
-
-    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
 
     for(int i = 0; i < num_tests; i++) {
         const struct TestInfo *test = &tests[i];
