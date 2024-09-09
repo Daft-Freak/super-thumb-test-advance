@@ -689,6 +689,58 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
         }
     }
 
+    // run again, but using registers >= 8
+    // helpfully, the register fields are at consistent offsets
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo32 *test = &tests[i];
+
+        // init data
+        for(int i = 0; i < 4; i++)
+            test_data[i] = test_data_init[i];
+    
+        // value test
+        uint16_t *ptr = code_buf;
+
+        uint32_t opcode = test->opcode | 0x00088000;
+
+        *ptr++ = 0xE92D; // push
+        *ptr++ = 0x0F00; // r8-11
+
+        *ptr++ = 0x4692; // mov r10, r2
+
+        if(is_store)
+            *ptr++ = 0x4680; // mov r8, r0
+
+        *ptr++ = opcode >> 16;
+        *ptr++ = opcode;
+
+        if(!is_store)
+            *ptr++ = 0x4640; // mov r0, r8
+
+        *ptr++ = 0xE8BD; // pop
+        *ptr++ = 0x0F00; // r8-11
+
+        *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        invalidate_icache();
+
+        uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
+
+        if(is_store) {
+            // read back nearest word
+            int offset = (test->opcode & 0xFF); // offset
+            uint32_t addr = (test->n_in + offset) & ~3;
+            out = *(uint32_t *)addr; 
+        }
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(num_tests + i, out, test->d_out);
+        }
+    }
+
     return res;
 }
 
