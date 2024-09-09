@@ -360,6 +360,8 @@ static const struct TestInfo store_sp_rel_tests[] = {
 
 #undef OP
 
+static const int num_store_sp_rel_tests = sizeof(store_sp_rel_tests) / sizeof(store_sp_rel_tests[0]);
+
 #if __ARM_ARCH >= 7
 
 // load, 12-bit immediate offset
@@ -510,8 +512,6 @@ static const struct TestInfo32 store_imm12_off_thumb2_tests[] = {
 static const int num_store_imm12_off_thumb2_tests = sizeof(store_imm12_off_thumb2_tests) / sizeof(store_imm12_off_thumb2_tests[0]);
 
 #endif
-
-static const int num_store_sp_rel_tests = sizeof(store_sp_rel_tests) / sizeof(store_sp_rel_tests[0]);
 
 static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
 
