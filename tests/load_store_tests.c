@@ -369,6 +369,9 @@ static const struct TestInfo store_sp_rel_tests[] = {
 #define OP_B(off, rb, rd) (0xF8900000 | rb << 16 | rd << 12 | off)
 #define OP_H(off, rb, rd) (0xF8B00000 | rb << 16 | rd << 12 | off)
 
+#define OP_SB(off, rb, rd) (0xF9900000 | rb << 16 | rd << 12 | off)
+#define OP_SH(off, rb, rd) (0xF9B00000 | rb << 16 | rd << 12 | off)
+
 static const struct TestInfo32 load_imm12_off_thumb2_tests[] = {
     // ldr r0 [r2 #imm]
     {OP_W(0, 2, 0), NO_SRC1, test_data_addr    , 0x01234567, 0, 0}, // 0
@@ -410,11 +413,44 @@ static const struct TestInfo32 load_imm12_off_thumb2_tests[] = {
     {OP_H(3, 2, 0), NO_SRC1, test_data_addr    , 0x0000EF01, 0, 0},
     {OP_H(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x0000EF01, 0, 0},
 #endif
+
+    // ldsb r0 [r2 r1]
+    {OP_SB(0, 2, 0), NO_SRC1, test_data_addr    , 0x00000067, 0, 0}, // 27
+    {OP_SB(1, 2, 0), NO_SRC1, test_data_addr    , 0x00000045, 0, 0},
+    {OP_SB(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x00000045, 0, 0},
+    {OP_SB(2, 2, 0), NO_SRC1, test_data_addr    , 0x00000023, 0, 0},
+    {OP_SB(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x00000023, 0, 0},
+    {OP_SB(3, 2, 0), NO_SRC1, test_data_addr    , 0x00000001, 0, 0},
+    {OP_SB(0, 2, 0), NO_SRC1, test_data_addr + 3, 0x00000001, 0, 0},
+    {OP_SB(4, 2, 0), NO_SRC1, test_data_addr    , 0xFFFFFFEF, 0, 0},
+    {OP_SB(0, 2, 0), NO_SRC1, test_data_addr + 4, 0xFFFFFFEF, 0, 0},
+    // a few more that get extended
+    {OP_SB(6, 2, 0), NO_SRC1, test_data_addr    , 0xFFFFFFAB, 0, 0},
+    {OP_SB(8, 2, 0), NO_SRC1, test_data_addr    , 0xFFFFFF98, 0, 0},
+
+    // ldsh r0 [r2 r1]
+    {OP_SH(0, 2, 0), NO_SRC1, test_data_addr    , 0x00004567, 0, 0}, // 38
+    {OP_SH(2, 2, 0), NO_SRC1, test_data_addr    , 0x00000123, 0, 0},
+    {OP_SH(0, 2, 0), NO_SRC1, test_data_addr + 2, 0x00000123, 0, 0},
+    {OP_SH(4, 2, 0), NO_SRC1, test_data_addr    , 0xFFFFCDEF, 0, 0},
+    {OP_SH(0, 2, 0), NO_SRC1, test_data_addr + 4, 0xFFFFCDEF, 0, 0},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_SH(1, 2, 0), NO_SRC1, test_data_addr    , 0x00002345, 0, 0},
+    {OP_SH(0, 2, 0), NO_SRC1, test_data_addr + 1, 0x00002345, 0, 0},
+    {OP_SH(3, 2, 0), NO_SRC1, test_data_addr    , 0xFFFFEF01, 0, 0},
+    {OP_SH(0, 2, 0), NO_SRC1, test_data_addr + 3, 0xFFFFEF01, 0, 0},
+    {OP_SH(0, 2, 0), NO_SRC1, test_data_addr + 5, 0xFFFFABCD, 0, 0},
+    {OP_SH(0, 2, 0), NO_SRC1, test_data_addr + 7, 0xFFFF9889, 0, 0},
+#endif
 };
 
 #undef OP_W
 #undef OP_B
 #undef OP_H
+#undef OP_SB
+#undef OP_SH
 
 static const int num_load_imm12_off_thumb2_tests = sizeof(load_imm12_off_thumb2_tests) / sizeof(load_imm12_off_thumb2_tests[0]);
 
