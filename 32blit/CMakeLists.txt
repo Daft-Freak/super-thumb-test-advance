@@ -5,6 +5,7 @@ blit_executable(thumb-test
     ../tests/tests.c
     ../tests/load_store_tests.c
 )
+blit_metadata(thumb-test metadata.yml)
 
 target_include_directories(thumb-test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../)
 
