@@ -949,6 +949,64 @@ static const struct TestInfo32 store_reg_thumb2_tests[] = {
 
 static const int num_store_reg_thumb2_tests = sizeof(store_reg_thumb2_tests) / sizeof(store_reg_thumb2_tests[0]);
 
+// load dual, 8-bit immediate offset
+// optional writeback, pre/post index and sub
+// offset is in words, not bytes
+
+#define OP(off, rb, rd, rd2, pre_index, add, writeback) (0xE8500000 | pre_index << 24 | add << 23 | writeback << 21 | rb << 16 | rd << 12 | rd2 << 8 | off)
+
+// using flags out to store base out
+// using flags in to store 2nd result
+
+static const struct TestInfo32 load_dual_imm8_off_thumb2_tests[] = {
+    // ldr r0 [r2 #imm]
+    {OP(0, 2, 0, 1, 1, 1, 0), NO_SRC1, test_data_addr    , 0x01234567, 0x89ABCDEF, test_data_addr    }, // 0
+    {OP(1, 2, 0, 1, 1, 1, 0), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0xFEDCBA98, test_data_addr    },
+    {OP(0, 2, 0, 1, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0xFEDCBA98, test_data_addr + 4},
+    // sub
+    {OP(0, 2, 0, 1, 1, 0, 0), NO_SRC1, test_data_addr    , 0x01234567, 0x89ABCDEF, test_data_addr    },
+    {OP(1, 2, 0, 1, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x01234567, 0x89ABCDEF, test_data_addr + 4},
+    // writeback
+    {OP(1, 2, 0, 1, 1, 1, 1), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0xFEDCBA98, test_data_addr + 4},
+    {OP(1, 2, 0, 1, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x01234567, 0x89ABCDEF, test_data_addr    },
+    // writeback post
+    {OP(1, 2, 0, 1, 0, 1, 1), NO_SRC1, test_data_addr    , 0x01234567, 0x89ABCDEF, test_data_addr + 4},
+    {OP(1, 2, 0, 1, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0xFEDCBA98, test_data_addr    },
+
+    // misaligned faults
+};
+
+#undef OP
+
+static const int num_load_dual_imm8_off_thumb2_tests = sizeof(load_dual_imm8_off_thumb2_tests) / sizeof(load_dual_imm8_off_thumb2_tests[0]);
+
+// store dual, 8-bit immediate offset
+
+#define OP(off, rb, rd, rd2, pre_index, add, writeback) (0xE8400000 | pre_index << 24 | add << 23 | writeback << 21 | rb << 16 | rd << 12 | rd2 << 8 | off)
+
+// using flags out to store base out
+// using flags in to store 2nd result
+
+static const struct TestInfo32 store_dual_imm8_off_thumb2_tests[] = {
+    // str r0 [r2 #imm]
+    {OP(0, 2, 0, 1, 1, 1, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0xA7AD75E7, test_data_addr    }, // 0
+    {OP(1, 2, 0, 1, 1, 1, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0xA7AD75E7, test_data_addr    },
+    {OP(0, 2, 0, 1, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0xA7AD75E7, test_data_addr + 4},
+    // sub
+    {OP(0, 2, 0, 1, 1, 0, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0xA7AD75E7, test_data_addr    },
+    {OP(1, 2, 0, 1, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0xA7AD75E7, test_data_addr + 4},
+    // writeback
+    {OP(1, 2, 0, 1, 1, 1, 1), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0xA7AD75E7, test_data_addr + 4},
+    {OP(1, 2, 0, 1, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0xA7AD75E7, test_data_addr    },
+    // writeback post
+    {OP(1, 2, 0, 1, 0, 1, 1), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0xA7AD75E7, test_data_addr + 4},
+    {OP(1, 2, 0, 1, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0xA7AD75E7, test_data_addr    },
+};
+
+#undef OP
+
+static const int num_store_dual_imm8_off_thumb2_tests = sizeof(store_dual_imm8_off_thumb2_tests) / sizeof(store_dual_imm8_off_thumb2_tests[0]);
+
 #endif
 
 static bool run_pc_rel_load_tests(GroupCallback group_cb, FailCallback fail_cb, const char *label) {
@@ -1281,6 +1339,99 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
     return res;
 }
 
+static bool run_load_store_dual_thumb2_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, bool is_store) {
+
+    bool res = true;
+
+    group_cb(label);
+
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo32 *test = &tests[i];
+
+        // init data
+        for(int i = 0; i < 4; i++)
+            test_data[i] = test_data_init[i];
+    
+        // value test
+        uint16_t *ptr = code_buf;
+
+        *ptr++ = test->opcode >> 16;
+        *ptr++ = test->opcode;
+        *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+        invalidate_icache();
+
+        uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, is_store ? 0xA7AD75E7 : test->m_in, test->n_in, 0x3BAD);
+        uint32_t out2;
+
+        if(is_store) {
+            // read back nearest word
+            int offset;
+            
+            // these are always an 8-bit immediate, but it's shifted
+            offset = (test->opcode & 0xFF) << 2; // offset from imm
+           
+            if(!(test->opcode & (1 << 24)))
+                offset = 0;
+            if(!(test->opcode & (1 << 23)))
+                offset = -offset;
+
+            uint32_t addr = (test->n_in + offset) & ~3;
+            out = *(uint32_t *)addr; 
+            out2 = *(uint32_t *)(addr + 4); 
+        } else {
+            // otherwise test again to get 2nd value
+            ptr = code_buf;
+
+            *ptr++ = test->opcode >> 16;
+            *ptr++ = test->opcode;
+            *ptr++ = 1 << 3; // move r0 r1
+            *ptr++ = 0x4770; // BX LR
+
+            invalidate_icache();
+
+            out2 = func(0xBAD, test->m_in, test->n_in, 0x3BAD);
+        }
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(i, out, test->d_out);
+        }
+
+        // repurpose psr_in, we're not using it
+        if(out2 != test->psr_in) {
+            res = false;
+            fail_cb(i, out2, test->psr_in);
+        }
+
+        // check base has been inc/decremented (or not)
+        for(int i = 0; i < 4; i++)
+            test_data[i] = test_data_init[i];
+
+        ptr = code_buf;
+
+        *ptr++ = test->opcode >> 16;
+        *ptr++ = test->opcode;
+        *ptr++ = 2 << 3; // mov r0, r2
+
+        *ptr++ = 0x4770; // BX LR
+
+        invalidate_icache();
+
+        out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
+
+        // also repurpose psr out
+        if(out != test->psr_out) {
+            res = false;
+            fail_cb(i, out, test->psr_out);
+        }
+    }
+
+    return res;
+}
+
 #endif
 
 bool run_single_load_store_tests(GroupCallback group_cb, FailCallback fail_cb) {
@@ -1303,6 +1454,8 @@ bool run_single_load_store_tests(GroupCallback group_cb, FailCallback fail_cb) {
     ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_imm8_off_thumb2_tests, num_store_imm8_off_thumb2_tests, "str.imm8", true, false) && ret;
     ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_reg_thumb2_tests, num_load_reg_thumb2_tests, "ldr.reg.t2", false, true) && ret;
     ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_reg_thumb2_tests, num_store_reg_thumb2_tests, "str.reg.t2", true, true) && ret;
+    ret = run_load_store_dual_thumb2_tests(group_cb, fail_cb, load_dual_imm8_off_thumb2_tests, num_load_dual_imm8_off_thumb2_tests, "ldr.imm8.d", false) && ret;
+    ret = run_load_store_dual_thumb2_tests(group_cb, fail_cb, store_dual_imm8_off_thumb2_tests, num_store_dual_imm8_off_thumb2_tests, "str.imm8.d", true) && ret;
 #endif
 
     return ret;
