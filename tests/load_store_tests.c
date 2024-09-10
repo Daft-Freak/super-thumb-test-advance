@@ -511,6 +511,264 @@ static const struct TestInfo32 store_imm12_off_thumb2_tests[] = {
 
 static const int num_store_imm12_off_thumb2_tests = sizeof(store_imm12_off_thumb2_tests) / sizeof(store_imm12_off_thumb2_tests[0]);
 
+// load, 8-bit immediate offset
+// optional writeback, pre/post index and sub
+
+#define OP_W(off, rb, rd, pre_index, add, writeback) (0xF8500800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+#define OP_B(off, rb, rd, pre_index, add, writeback) (0xF8100800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+#define OP_H(off, rb, rd, pre_index, add, writeback) (0xF8300800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+
+#define OP_SB(off, rb, rd, pre_index, add, writeback) (0xF9100800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+#define OP_SH(off, rb, rd, pre_index, add, writeback) (0xF9300800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+
+// using flags out to store base out
+
+static const struct TestInfo32 load_imm8_off_thumb2_tests[] = {
+    // ldr r0 [r2 #imm]
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x01234567, 0, test_data_addr    }, // 0
+    {OP_W(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0, test_data_addr + 4},
+    // sub
+    {OP_W(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x01234567, 0, test_data_addr    },
+    {OP_W(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x01234567, 0, test_data_addr + 4},
+    // writeback
+    {OP_W(4, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x89ABCDEF, 0, test_data_addr + 4},
+    {OP_W(4, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x01234567, 0, test_data_addr    },
+    // writeback post
+    {OP_W(4, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x01234567, 0, test_data_addr + 4},
+    {OP_W(4, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x89ABCDEF, 0, test_data_addr    },
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_W(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xEF012345, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0xEF012345, 0, test_data_addr + 1},
+    {OP_W(3, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0xEF012345, 0, test_data_addr + 4},
+    {OP_W(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xCDEF0123, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0xCDEF0123, 0, test_data_addr + 2},
+    {OP_W(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0xCDEF0123, 0, test_data_addr + 4},
+    {OP_W(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xABCDEF01, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0xABCDEF01, 0, test_data_addr + 3},
+    {OP_W(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0xABCDEF01, 0, test_data_addr + 4},
+
+    {OP_W(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0xEF012345, 0, test_data_addr + 1},
+    {OP_W(1, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0xABCDEF01, 0, test_data_addr + 3},
+#endif
+
+    // ldrb r0 [r2 #imm]
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000067, 0, test_data_addr    }, // 20
+    {OP_B(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000045, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0x00000045, 0, test_data_addr + 1},
+    {OP_B(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000023, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0x00000023, 0, test_data_addr + 2},
+    {OP_B(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000001, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0x00000001, 0, test_data_addr + 3},
+    {OP_B(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x000000EF, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x000000EF, 0, test_data_addr + 4},
+    // sub
+    {OP_B(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x00000067, 0, test_data_addr    },
+    {OP_B(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000001, 0, test_data_addr + 4},
+    {OP_B(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000023, 0, test_data_addr + 4},
+    {OP_B(3, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000045, 0, test_data_addr + 4},
+    {OP_B(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000067, 0, test_data_addr + 4},
+    // writeback
+    {OP_B(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x00000045, 0, test_data_addr + 1},
+    {OP_B(1, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x00000001, 0, test_data_addr + 3},
+    {OP_B(1, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x00000067, 0, test_data_addr + 1},
+    {OP_B(1, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x000000EF, 0, test_data_addr + 3},
+
+    // ldrh r0 [r2 #imm]
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00004567, 0, test_data_addr    }, // 38
+    {OP_H(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000123, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0x00000123, 0, test_data_addr + 2},
+    {OP_H(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x0000CDEF, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x0000CDEF, 0, test_data_addr + 4},
+    // sub
+    {OP_H(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x00004567, 0, test_data_addr    },
+    {OP_H(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000123, 0, test_data_addr + 4},
+    {OP_H(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00004567, 0, test_data_addr + 4},
+    // writeback
+    {OP_H(2, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x00000123, 0, test_data_addr + 2},
+    {OP_H(2, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x00000123, 0, test_data_addr + 2},
+    {OP_H(2, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x00004567, 0, test_data_addr + 2},
+    {OP_H(2, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x0000CDEF, 0, test_data_addr + 2},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_H(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00002345, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0x00002345, 0, test_data_addr + 1},
+    {OP_H(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 2, 0x00002345, 0, test_data_addr + 2},
+    {OP_H(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x0000EF01, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0x0000EF01, 0, test_data_addr + 3},
+    {OP_H(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x0000EF01, 0, test_data_addr + 4},
+
+    {OP_H(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x00002345, 0, test_data_addr + 1},
+    {OP_H(3, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x0000EF01, 0, test_data_addr + 3},
+#endif
+
+    // ldsb r0 [r2 r1]
+    {OP_SB(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000067, 0, test_data_addr    }, // 58
+    {OP_SB(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000045, 0, test_data_addr    },
+    {OP_SB(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0x00000045, 0, test_data_addr + 1},
+    {OP_SB(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000023, 0, test_data_addr    },
+    {OP_SB(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0x00000023, 0, test_data_addr + 2},
+    {OP_SB(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000001, 0, test_data_addr    },
+    {OP_SB(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0x00000001, 0, test_data_addr + 3},
+    {OP_SB(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xFFFFFFEF, 0, test_data_addr    },
+    {OP_SB(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0xFFFFFFEF, 0, test_data_addr + 4},
+    // a few more that get extended
+    {OP_SB(6, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xFFFFFFAB, 0, test_data_addr    },
+    {OP_SB(8, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xFFFFFF98, 0, test_data_addr    },
+    // sub
+    {OP_SB(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x00000067, 0, test_data_addr    },
+    {OP_SB(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000001, 0, test_data_addr + 4},
+    {OP_SB(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000023, 0, test_data_addr + 4},
+    {OP_SB(3, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000045, 0, test_data_addr + 4},
+    {OP_SB(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000067, 0, test_data_addr + 4},
+    {OP_SB(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 8, 0xFFFFFFEF, 0, test_data_addr + 8},
+    // writeback
+    {OP_SB(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x00000045, 0, test_data_addr + 1},
+    {OP_SB(1, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x00000001, 0, test_data_addr + 3},
+    {OP_SB(1, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x00000067, 0, test_data_addr + 1},
+    {OP_SB(1, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0xFFFFFFEF, 0, test_data_addr + 3},
+
+    // ldsh r0 [r2 r1]
+    {OP_SH(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00004567, 0, test_data_addr    }, // 79
+    {OP_SH(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00000123, 0, test_data_addr    },
+    {OP_SH(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0x00000123, 0, test_data_addr + 2},
+    {OP_SH(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xFFFFCDEF, 0, test_data_addr    },
+    {OP_SH(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0xFFFFCDEF, 0, test_data_addr + 4},
+    // sub
+    {OP_SH(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x00004567, 0, test_data_addr    },
+    {OP_SH(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00000123, 0, test_data_addr + 4},
+    {OP_SH(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x00004567, 0, test_data_addr + 4},
+    {OP_SH(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 8, 0xFFFFCDEF, 0, test_data_addr + 8},
+    // writeback
+    {OP_SH(2, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x00000123, 0, test_data_addr + 2},
+    {OP_SH(2, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x00000123, 0, test_data_addr + 2},
+    {OP_SH(2, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x00004567, 0, test_data_addr + 2},
+    {OP_SH(2, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0xFFFFCDEF, 0, test_data_addr + 2},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_SH(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x00002345, 0, test_data_addr    },
+    {OP_SH(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0x00002345, 0, test_data_addr + 1},
+    {OP_SH(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 2, 0x00002345, 0, test_data_addr + 2},
+    {OP_SH(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xFFFFEF01, 0, test_data_addr    },
+    {OP_SH(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0xFFFFEF01, 0, test_data_addr + 3},
+    {OP_SH(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0xFFFFEF01, 0, test_data_addr + 4},
+    {OP_SH(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 5, 0xFFFFABCD, 0, test_data_addr + 5},
+    {OP_SH(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 7, 0xFFFF9889, 0, test_data_addr + 7},
+
+    {OP_SH(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x00002345, 0, test_data_addr + 1},
+    {OP_SH(3, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0xFFFFEF01, 0, test_data_addr + 3},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+#undef OP_SB
+#undef OP_SH
+
+static const int num_load_imm8_off_thumb2_tests = sizeof(load_imm8_off_thumb2_tests) / sizeof(load_imm8_off_thumb2_tests[0]);
+
+// store, 8-bit immediate offset
+
+#define OP_W(off, rb, rd, pre_index, add, writeback) (0xF8400800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+#define OP_B(off, rb, rd, pre_index, add, writeback) (0xF8000800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+#define OP_H(off, rb, rd, pre_index, add, writeback) (0xF8200800 | rb << 16 | rd << 12 | pre_index << 10 | add << 9 | writeback << 8 | off)
+
+// using flags out to store base out
+
+static const struct TestInfo32 store_imm8_off_thumb2_tests[] = {
+    // str r0 [r2 #imm]
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0, test_data_addr    }, // 0
+    {OP_W(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0, test_data_addr + 4},
+    // sub
+    {OP_W(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0, test_data_addr    },
+    {OP_W(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0, test_data_addr + 4},
+    // writeback
+    {OP_W(4, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0, test_data_addr + 4},
+    {OP_W(4, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0, test_data_addr    },
+    // writeback post
+    {OP_W(4, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x7E57DA7A, 0, test_data_addr + 4},
+    {OP_W(4, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x7E57DA7A, 0, test_data_addr    },
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_W(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x57DA7A67, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0x57DA7A67, 0, test_data_addr + 1},
+    {OP_W(3, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x57DA7A67, 0, test_data_addr + 4},
+    {OP_W(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xDA7A4567, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0xDA7A4567, 0, test_data_addr + 2},
+    {OP_W(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0xDA7A4567, 0, test_data_addr + 4},
+    {OP_W(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x7A234567, 0, test_data_addr    },
+    {OP_W(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0x7A234567, 0, test_data_addr + 3},
+    {OP_W(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x7A234567, 0, test_data_addr + 4},
+
+    {OP_W(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x57DA7A67, 0, test_data_addr + 1},
+    {OP_W(1, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x7A234567, 0, test_data_addr + 3},
+#endif
+
+    // strb r0 [r2 #imm]
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x0123457A, 0, test_data_addr    }, // 20
+    {OP_B(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x01237A67, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0x01237A67, 0, test_data_addr + 1},
+    {OP_B(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x017A4567, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0x017A4567, 0, test_data_addr + 2},
+    {OP_B(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x7A234567, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0x7A234567, 0, test_data_addr + 3},
+    {OP_B(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x89ABCD7A, 0, test_data_addr    },
+    {OP_B(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x89ABCD7A, 0, test_data_addr + 4},
+    // sub
+    {OP_B(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x0123457A, 0, test_data_addr    },
+    {OP_B(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x7A234567, 0, test_data_addr + 4},
+    {OP_B(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x017A4567, 0, test_data_addr + 4},
+    {OP_B(3, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x01237A67, 0, test_data_addr + 4},
+    {OP_B(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x0123457A, 0, test_data_addr + 4},
+    // writeback
+    {OP_B(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x01237A67, 0, test_data_addr + 1},
+    {OP_B(1, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0x7A234567, 0, test_data_addr + 3},
+    {OP_B(1, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x0123457A, 0, test_data_addr + 1},
+    {OP_B(1, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x89ABCD7A, 0, test_data_addr + 3},
+
+    // strh r0 [r2 #imm]
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x0123DA7A, 0, test_data_addr    }, // 38
+    {OP_H(2, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0xDA7A4567, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 2, 0xDA7A4567, 0, test_data_addr + 2},
+    {OP_H(4, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x89ABDA7A, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 4, 0x89ABDA7A, 0, test_data_addr + 4},
+    // sub
+    {OP_H(0, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr    , 0x0123DA7A, 0, test_data_addr    },
+    {OP_H(2, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0xDA7A4567, 0, test_data_addr + 4},
+    {OP_H(4, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x0123DA7A, 0, test_data_addr + 4},
+    // writeback
+    {OP_H(2, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0xDA7A4567, 0, test_data_addr + 2},
+    {OP_H(2, 2, 0, 1, 0, 1), NO_SRC1, test_data_addr + 4, 0xDA7A4567, 0, test_data_addr + 2},
+    {OP_H(2, 2, 0, 0, 1, 1), NO_SRC1, test_data_addr    , 0x0123DA7A, 0, test_data_addr + 2},
+    {OP_H(2, 2, 0, 0, 0, 1), NO_SRC1, test_data_addr + 4, 0x89ABDA7A, 0, test_data_addr + 2},
+
+#ifdef __ARM_FEATURE_UNALIGNED
+    // misaligned
+    {OP_H(1, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x01DA7A67, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 1, 0x01DA7A67, 0, test_data_addr + 1},
+    {OP_H(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 2, 0x01DA7A67, 0, test_data_addr + 2},
+    {OP_H(3, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr    , 0x7A234567, 0, test_data_addr    },
+    {OP_H(0, 2, 0, 1, 1, 0), NO_SRC1, test_data_addr + 3, 0x7A234567, 0, test_data_addr + 3},
+    {OP_H(1, 2, 0, 1, 0, 0), NO_SRC1, test_data_addr + 4, 0x7A234567, 0, test_data_addr + 4},
+
+    {OP_H(1, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x01DA7A67, 0, test_data_addr + 1},
+    {OP_H(3, 2, 0, 1, 1, 1), NO_SRC1, test_data_addr    , 0x7A234567, 0, test_data_addr + 3},
+#endif
+};
+
+#undef OP_W
+#undef OP_B
+#undef OP_H
+
+static const int num_store_imm8_off_thumb2_tests = sizeof(store_imm8_off_thumb2_tests) / sizeof(store_imm8_off_thumb2_tests[0]);
+
 // load, register offset
 // these have an extra shift
 
@@ -875,6 +1133,8 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
     for(int i = 0; i < num_tests; i++) {
         const struct TestInfo32 *test = &tests[i];
 
+        bool check_base = test->psr_out != 0;
+
         // init data
         for(int i = 0; i < 4; i++)
             test_data[i] = test_data_init[i];
@@ -898,8 +1158,16 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
             
             if(is_reg_offset)
                 offset = test->m_in << ((test->opcode >> 4) & 3); // offset from shifted reg
-            else
+            else {
                 offset = test->opcode & 0xFF; // offset from imm
+            
+                // assume if we're checking the base that this is the 8-bit variant
+                // and check the "index" and "add" bits
+                if(check_base && !(test->opcode & (1 << 10)))
+                    offset = 0;
+                if(check_base && !(test->opcode & (1 << 9)))
+                    offset = -offset;
+            }
 
             uint32_t addr = (test->n_in + offset) & ~3;
             out = *(uint32_t *)addr; 
@@ -909,12 +1177,39 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
             res = false;
             fail_cb(i, out, test->d_out);
         }
+
+        // check base has been inc/decremented (or not)
+        
+        if(check_base) {
+            for(int i = 0; i < 4; i++)
+                test_data[i] = test_data_init[i];
+
+            ptr = code_buf;
+
+            *ptr++ = test->opcode >> 16;
+            *ptr++ = test->opcode;
+            *ptr++ = 2 << 3; // mov r0, r2
+
+            *ptr++ = 0x4770; // BX LR
+
+            invalidate_icache();
+
+            uint32_t out = func(is_store ? 0x7E57DA7A : 0xBAD, test->m_in, test->n_in, 0x3BAD);
+
+            if(out != test->psr_out) {
+                res = false;
+                fail_cb(i, out, test->psr_out);
+            }
+        }
     }
 
     // run again, but using registers >= 8
     // helpfully, the register fields are at consistent offsets
     for(int i = 0; i < num_tests; i++) {
         const struct TestInfo32 *test = &tests[i];
+
+        // not actually doing the check here
+        bool check_base = test->psr_out != 0;
 
         // init data
         for(int i = 0; i < 4; i++)
@@ -962,8 +1257,16 @@ static bool run_load_store_thumb2_tests(GroupCallback group_cb, FailCallback fai
             
             if(is_reg_offset)
                 offset = test->m_in << ((test->opcode >> 4) & 3); // offset from shifted reg
-            else
+            else {
                 offset = test->opcode & 0xFF; // offset from imm
+            
+                // assume if we're checking the base that this is the 8-bit variant
+                // and check the "index" and "add" bits
+                if(check_base && !(test->opcode & (1 << 10)))
+                    offset = 0;
+                if(check_base && !(test->opcode & (1 << 9)))
+                    offset = -offset;
+            }
 
             uint32_t addr = (test->n_in + offset) & ~3;
             out = *(uint32_t *)addr; 
@@ -996,6 +1299,8 @@ bool run_single_load_store_tests(GroupCallback group_cb, FailCallback fail_cb) {
 #if __ARM_ARCH >= 7
     ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_imm12_off_thumb2_tests, num_load_imm12_off_thumb2_tests, "ldr.imm12", false, false) && ret;
     ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_imm12_off_thumb2_tests, num_store_imm12_off_thumb2_tests, "str.imm12", true, false) && ret;
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_imm8_off_thumb2_tests, num_load_imm8_off_thumb2_tests, "ldr.imm8", false, false) && ret;
+    ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_imm8_off_thumb2_tests, num_store_imm8_off_thumb2_tests, "str.imm8", true, false) && ret;
     ret = run_load_store_thumb2_tests(group_cb, fail_cb, load_reg_thumb2_tests, num_load_reg_thumb2_tests, "ldr.reg.t2", false, true) && ret;
     ret = run_load_store_thumb2_tests(group_cb, fail_cb, store_reg_thumb2_tests, num_store_reg_thumb2_tests, "str.reg.t2", true, true) && ret;
 #endif
