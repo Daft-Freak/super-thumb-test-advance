@@ -1377,7 +1377,7 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
             fail_cb(i, out, test->d_out);
         }
 
-        if(has_dest) {
+        if(has_dest && (test->opcode & s_bit)) {
             // check that the opcode behaves the same without setting flags
             // this would be invalid for the ones that don't have a dest (TST, TEQ, CMN, CMP)
             *op_ptr = (test->opcode & ~s_bit) >> 16;
@@ -1414,7 +1414,7 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
             fail_cb(i, out, test->psr_out);
         }
 
-        if(has_dest) {
+        if(has_dest && (test->opcode & s_bit)) {
             // make sure flags are unmodified if not setting them
             code_buf[3] = (test->opcode & ~s_bit) >> 16;
             invalidate_icache();
