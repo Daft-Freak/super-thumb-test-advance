@@ -1336,11 +1336,16 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
 
     int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
 
+    const int s_bit = 1 << 20;
+
     for(int i = 0; i < num_tests; i++) {
         const struct TestInfo32 *test = &tests[i];
+
+        bool has_dest = (test->opcode >> 8 & 0xF) != 0xF;
     
         // value test
         uint16_t *ptr = code_buf;
+        uint16_t *op_ptr;
 
         if(flags_for_val) {
             *ptr++ = 0xB500; // push lr
@@ -1348,6 +1353,7 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
             *ptr++ = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
         }
 
+        op_ptr = ptr;
         *ptr++ = test->opcode >> 16;
         *ptr++ = test->opcode;
 
@@ -1371,6 +1377,20 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
             fail_cb(i, out, test->d_out);
         }
 
+        if(has_dest) {
+            // check that the opcode behaves the same without setting flags
+            // this would be invalid for the ones that don't have a dest (TST, TEQ, CMN, CMP)
+            *op_ptr = (test->opcode & ~s_bit) >> 16;
+            invalidate_icache();
+
+            out = func(in0, test->m_in, test->n_in, 0x3BAD);
+
+            if(out != test->d_out) {
+                res = false;
+                fail_cb(i, out, test->d_out);
+            }
+        }
+
         // flags test
         // this relies on the PSR helpers not affecting anything other than R0
         code_buf[0] = 0xB500; // push lr
@@ -1392,6 +1412,22 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
         if(out != test->psr_out) {
             res = false;
             fail_cb(i, out, test->psr_out);
+        }
+
+        if(has_dest) {
+            // make sure flags are unmodified if not setting them
+            code_buf[3] = (test->opcode & ~s_bit) >> 16;
+            invalidate_icache();
+            out = func(test->psr_in | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
+            out &= PSR_MASK;
+
+            if(out != test->psr_in) {
+                res = false;
+                fail_cb(i, out, test->psr_in);
+            }
+
+            // restore opcode
+            code_buf[3] = test->opcode >> 16;
         }
 
         // single flag tests
