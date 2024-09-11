@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "tests_common.h"
 #include "load_store_tests.h"
+#include "thumb2_data_processing_tests.h"
 
 #ifdef TARGET_32BLIT_HW
 __attribute__((section(".data"))) // bss would be an entirely separate memory region
@@ -1325,6 +1326,106 @@ bool run_load_addr_tests(GroupCallback group_cb, FailCallback fail_cb, const cha
     return res;
 }
 
+bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, int dest, bool flags_for_val) {
+
+    bool res = true;
+
+    group_cb(label);
+
+    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
+
+    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
+
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo32 *test = &tests[i];
+    
+        // value test
+        uint16_t *ptr = code_buf;
+
+        if(flags_for_val) {
+            *ptr++ = 0xB500; // push lr
+            *ptr++ = 0xF000 | ((set_cpsr_off >> 12) & 0x7FF); // bl set_cpsr
+            *ptr++ = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
+        }
+
+        *ptr++ = test->opcode >> 16;
+        *ptr++ = test->opcode;
+
+        if(dest != 0) // assume < 8
+            *ptr++ = dest << 3; // mov r0 rN
+        
+        if(flags_for_val)
+            *ptr++ = 0xBD00; // pop pc
+        else
+            *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+        invalidate_icache();
+
+        uint32_t in0 = flags_for_val ? (test->psr_in | psr_save) : 0xBAD;
+
+        uint32_t out = func(in0, test->m_in, test->n_in, 0x3BAD);
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(i, out, test->d_out);
+        }
+
+        // flags test
+        // this relies on the PSR helpers not affecting anything other than R0
+        code_buf[0] = 0xB500; // push lr
+        code_buf[1] = 0xF000 | ((set_cpsr_off >> 12) & 0x7FF); // bl set_cpsr
+        code_buf[2] = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
+
+        code_buf[3] = test->opcode >> 16;
+        code_buf[4] = test->opcode;
+
+        code_buf[5] = 0xBC01; // pop r0
+        code_buf[6] = 0x4686; // mov lr r0
+        code_buf[7] = 0x4718; // bx r3
+
+        invalidate_icache();
+
+        out = func(test->psr_in | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
+        out &= PSR_MASK;
+
+        if(out != test->psr_out) {
+            res = false;
+            fail_cb(i, out, test->psr_out);
+        }
+
+        // single flag tests
+        // (to try and break my recompiler)
+        for(int j = 0; j < 4; j++) {
+            // Z C N V
+            static const uint32_t flags[] = {FLAG_Z, FLAG_C, FLAG_N, FLAG_V};
+
+            code_buf[5] = 0xD001 | (j << 9); // Bcc +4
+            // flag not set
+            code_buf[6] = 0x1A00; // sub r0 r0 r0
+            code_buf[7] = 0xE001; // B + 4
+            // flag set
+            code_buf[8] = 0x1A00; // sub r0 r0 r0
+            code_buf[9] = 0x3001; // add r0 1
+
+            code_buf[10] = 0xBD00; // pop pc
+
+            invalidate_icache();
+
+            out = func(test->psr_in | psr_save, test->m_in, test->n_in, 0x3BAD);
+
+            if(out != !!(test->psr_out & flags[j])) {
+                res = false;
+                fail_cb(i, out ? flags[j] : 0, test->psr_out & flags[j]);
+            }
+        }
+
+    }
+
+    return res;
+}
+
+
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
     bool ret = true;
 
@@ -1346,6 +1447,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
 
 #if __ARM_ARCH >= 7
     ret = run_ldm_stm_thumb2_tests(group_cb, fail_cb, "ldmstm.t2") && ret;
+    ret = run_thumb2_data_processing_tests(group_cb, fail_cb) && ret;
 #endif
 
     return ret;

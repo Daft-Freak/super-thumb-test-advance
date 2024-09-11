@@ -4,6 +4,7 @@ blit_executable(thumb-test
     main.cpp
     ../tests/tests.c
     ../tests/load_store_tests.c
+    ../tests/thumb2_data_processing_tests.c
 )
 blit_metadata(thumb-test metadata.yml)
 
