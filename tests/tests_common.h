@@ -2,12 +2,19 @@
 
 #include <stdint.h>
 
+#define FLAG_Q (1 << 27) // v6 (or 5TE), though we only care about it on v7M
 #define FLAG_V (1 << 28)
 #define FLAG_C (1 << 29)
 #define FLAG_Z (1 << 30)
 #define FLAG_N (1 << 31)
 
+#if __ARM_ARCH >= 7
+#define PSR_MASK 0xF8000000
+#else
 #define PSR_MASK 0xF0000000
+#endif
+
+#define PSR_VCZN 0xF0000000
 
 #define NO_SRC1 0x1BAD
 #define NO_SRC2 0x2BAD

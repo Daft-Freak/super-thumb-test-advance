@@ -15,7 +15,7 @@
 static const struct TestInfo32 dp_mod_imm_tests[] = {
     // AND r0 r2 #imm
     {OP(0x0, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 0
-    {OP(0x0, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x0, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
     {OP(0x0, 1,  2,  0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x00000000, 0              , FLAG_Z                  },
     {OP(0x0, 1,  2,  0, 0x4FE), NO_SRC1, 0x00000000, 0x00000000, FLAG_C         , FLAG_Z                  },
     {OP(0x0, 1,  2,  0, 0x4FE), NO_SRC1, 0x7FFFFFFF, 0x7F000000, 0              , 0                       },
@@ -35,7 +35,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // TST r2 #imm
     {OP(0x0, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, 0              , FLAG_Z                  }, // 18
-    {OP(0x0, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x0, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
     {OP(0x0, 1,  2, 15, 0x000), NO_SRC1, 0x7FFFFFFF, 0x00000BAD, 0              , FLAG_Z                  },
     {OP(0x0, 1,  2, 15, 0x4FE), NO_SRC1, 0x00000000, 0x00000BAD, FLAG_C         , FLAG_Z                  },
     {OP(0x0, 1,  2, 15, 0x4FE), NO_SRC1, 0x7FFFFFFF, 0x00000BAD, 0              , 0                       },
@@ -55,7 +55,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // BIC r0 r2 #imm
     {OP(0x1, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 36
-    {OP(0x1, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x1, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
     {OP(0x1, 1,  2,  0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, 0              , 0                       },
     {OP(0x1, 1,  2,  0, 0x4FE), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_Z                  },
     {OP(0x1, 1,  2,  0, 0x4FE), NO_SRC1, 0x7FFFFFFF, 0x00FFFFFF, FLAG_N         , 0                       },
@@ -75,7 +75,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // ORR r0 r2 #imm
     {OP(0x2, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 54
-    {OP(0x2, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x2, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
     {OP(0x2, 1,  2,  0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, 0              , 0                       },
     {OP(0x2, 1,  2,  0, 0x4FE), NO_SRC1, 0x00000000, 0x7F000000, FLAG_C         , 0                       },
     {OP(0x2, 1,  2,  0, 0x4FE), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, 0              , 0                       },
@@ -96,7 +96,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
     // MOV r0 #imm
     // not much to test here
     {OP(0x2, 1, 15,  0, 0x000), NO_SRC1,    NO_SRC2, 0x00000000, 0              , FLAG_Z                  }, // 72
-    {OP(0x2, 1, 15,  0, 0x000), NO_SRC1,    NO_SRC2, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x2, 1, 15,  0, 0x000), NO_SRC1,    NO_SRC2, 0x00000000, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
     {OP(0x2, 1, 15,  0, 0x4FE), NO_SRC1,    NO_SRC2, 0x7F000000, FLAG_C         , 0                       },
     {OP(0x2, 1, 15,  0, 0x3FF), NO_SRC1,    NO_SRC2, 0xFFFFFFFF, FLAG_C         , FLAG_C | FLAG_N         },
     {OP(0x2, 1, 15,  0, 0x400), NO_SRC1,    NO_SRC2, 0x80000000, FLAG_Z         , FLAG_C | FLAG_N         },
@@ -108,7 +108,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // ORN r0 r2 #imm
     {OP(0x3, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0xFFFFFFFF, 0              , FLAG_N                  }, // 82
-    {OP(0x3, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0xFFFFFFFF, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(0x3, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0xFFFFFFFF, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
     {OP(0x3, 1,  2,  0, 0x000), NO_SRC1, 0x7FFFFFFF, 0xFFFFFFFF, 0              , FLAG_N                  },
     {OP(0x3, 1,  2,  0, 0x4FE), NO_SRC1, 0x00000000, 0x80FFFFFF, FLAG_C         , FLAG_N                  },
     {OP(0x3, 1,  2,  0, 0x4FE), NO_SRC1, 0x7FFFFFFF, 0xFFFFFFFF, 0              , FLAG_N                  },
@@ -128,7 +128,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // MVN r0 #imm
     {OP(0x3, 1, 15,  0, 0x000), NO_SRC1,    NO_SRC2, 0xFFFFFFFF, 0              , FLAG_N                  }, // 100
-    {OP(0x3, 1, 15,  0, 0x000), NO_SRC1,    NO_SRC2, 0xFFFFFFFF, PSR_MASK       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(0x3, 1, 15,  0, 0x000), NO_SRC1,    NO_SRC2, 0xFFFFFFFF, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
     {OP(0x3, 1, 15,  0, 0x4FE), NO_SRC1,    NO_SRC2, 0x80FFFFFF, FLAG_Z         , FLAG_N                  },
     {OP(0x3, 1, 15,  0, 0x3FF), NO_SRC1,    NO_SRC2, 0x00000000, FLAG_C         , FLAG_C | FLAG_Z         },
     {OP(0x3, 1, 15,  0, 0x400), NO_SRC1,    NO_SRC2, 0x7FFFFFFF, FLAG_N         , FLAG_C                  },
@@ -137,7 +137,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // EOR r0 r2 #imm
     {OP(0x4, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 107
-    {OP(0x4, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x4, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
     {OP(0x4, 1,  2,  0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, 0              , 0                       },
     {OP(0x4, 1,  2,  0, 0x4FE), NO_SRC1, 0x00000000, 0x7F000000, FLAG_C         , 0                       },
     {OP(0x4, 1,  2,  0, 0x4FE), NO_SRC1, 0x7FFFFFFF, 0x00FFFFFF, FLAG_N         , 0                       },
@@ -157,7 +157,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // TEQ r2 #imm
     {OP(0x4, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, 0              , FLAG_Z                  }, // 125
-    {OP(0x4, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_MASK       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x4, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
     {OP(0x4, 1,  2, 15, 0x000), NO_SRC1, 0x7FFFFFFF, 0x00000BAD, 0              , 0                       },
     {OP(0x4, 1,  2, 15, 0x4FE), NO_SRC1, 0x00000000, 0x00000BAD, FLAG_C         , 0                       },
     {OP(0x4, 1,  2, 15, 0x4FE), NO_SRC1, 0x7FFFFFFF, 0x00000BAD, FLAG_N         , 0                       },
@@ -177,7 +177,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // ADD r0 r2 imm
     {OP(0x8, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 143
-    {OP(0x8, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK       , FLAG_Z                  },
+    {OP(0x8, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN       , FLAG_Z                  },
     {OP(0x8, 1,  2,  0, 0x001), NO_SRC1, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, 0                       },
     {OP(0x8, 1,  2,  0, 0x000), NO_SRC1, 0x00000001, 0x00000001, FLAG_C | FLAG_N, 0                       },
     {OP(0x8, 1,  2,  0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_C | FLAG_Z, 0                       },
@@ -202,7 +202,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
     
     // CMN r2 #imm
     {OP(0x8, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, 0              , FLAG_Z                  }, // 166
-    {OP(0x8, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_MASK       , FLAG_Z                  },
+    {OP(0x8, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_VCZN       , FLAG_Z                  },
     {OP(0x8, 1,  2, 15, 0x001), NO_SRC1, 0x00000000, 0x00000BAD, FLAG_Z | FLAG_N, 0                       },
     {OP(0x8, 1,  2, 15, 0x000), NO_SRC1, 0x00000001, 0x00000BAD, FLAG_C | FLAG_N, 0                       },
     {OP(0x8, 1,  2, 15, 0x000), NO_SRC1, 0x7FFFFFFF, 0x00000BAD, FLAG_C | FLAG_Z, 0                       },
@@ -229,7 +229,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // SUB r0 r2 #imm
     {OP(0xD, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 189
-    {OP(0xD, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(0xD, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN       , FLAG_C | FLAG_Z         },
     {OP(0xD, 1,  2,  0, 0x001), NO_SRC1, 0x00000000, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
     {OP(0xD, 1,  2,  0, 0x000), NO_SRC1, 0x00000001, 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
     {OP(0xD, 1,  2,  0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
@@ -254,7 +254,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // CMP r2 #imm
     {OP(0xD, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, 0              , FLAG_C | FLAG_Z         }, // 212
-    {OP(0xD, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(0xD, 1,  2, 15, 0x000), NO_SRC1, 0x00000000, 0x00000BAD, PSR_VCZN       , FLAG_C | FLAG_Z         },
     {OP(0xD, 1,  2, 15, 0x001), NO_SRC1, 0x00000000, 0x00000BAD, FLAG_C | FLAG_Z, FLAG_N                  },
     {OP(0xD, 1,  2, 15, 0x000), NO_SRC1, 0x00000001, 0x00000BAD, FLAG_Z | FLAG_N, FLAG_C                  },
     {OP(0xD, 1,  2, 15, 0x000), NO_SRC1, 0x7FFFFFFF, 0x00000BAD, FLAG_Z | FLAG_N, FLAG_C                  },
@@ -279,7 +279,7 @@ static const struct TestInfo32 dp_mod_imm_tests[] = {
 
     // RSB r0 r2 imm
     {OP(0xE, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_C | FLAG_Z         }, // 235
-    {OP(0xE, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK       , FLAG_C | FLAG_Z         },
+    {OP(0xE, 1,  2,  0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN       , FLAG_C | FLAG_Z         },
     {OP(0xE, 1,  2,  0, 0x000), NO_SRC1, 0x00000001, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
     {OP(0xE, 1,  2,  0, 0x001), NO_SRC1, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, FLAG_C                  },
     {OP(0xE, 1,  2,  0, 0x4FE), NO_SRC1, 0x00000000, 0x7F000000, FLAG_Z | FLAG_N, FLAG_C                  },
@@ -308,7 +308,7 @@ static const int num_dp_mod_imm_tests = sizeof(dp_mod_imm_tests) / sizeof(dp_mod
 static const struct TestInfo32 dp_mod_imm_c_tests[] = {
     // ADC r0 r2 #imm
     {OP(0xA, 1, 2, 0, 0x000), NO_SRC1, 0x00000000, 0x00000000, 0              , FLAG_Z                  }, // 0
-    {OP(0xA, 1, 2, 0, 0x000), NO_SRC1, 0x00000000, 0x00000001, PSR_MASK       , 0                       },
+    {OP(0xA, 1, 2, 0, 0x000), NO_SRC1, 0x00000000, 0x00000001, PSR_VCZN       , 0                       },
     {OP(0xA, 1, 2, 0, 0x001), NO_SRC1, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, 0                       },
     {OP(0xA, 1, 2, 0, 0x000), NO_SRC1, 0x00000001, 0x00000001, FLAG_N         , 0                       },
     {OP(0xA, 1, 2, 0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_Z         , 0                       },
@@ -357,7 +357,7 @@ static const struct TestInfo32 dp_mod_imm_c_tests[] = {
     // SBC r0 r2 #imm
     // start with C set
     {OP(0xB, 1, 2, 0, 0x000), NO_SRC1, 0x00000000, 0xFFFFFFFF, 0                       , FLAG_N         }, // 44
-    {OP(0xB, 1, 2, 0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_MASK                , FLAG_C | FLAG_Z},
+    {OP(0xB, 1, 2, 0, 0x000), NO_SRC1, 0x00000000, 0x00000000, PSR_VCZN                , FLAG_C | FLAG_Z},
     {OP(0xB, 1, 2, 0, 0x001), NO_SRC1, 0x00000000, 0xFFFFFFFF, FLAG_C | FLAG_Z         , FLAG_N         },
     {OP(0xB, 1, 2, 0, 0x000), NO_SRC1, 0x00000001, 0x00000001, FLAG_C | FLAG_Z | FLAG_N, FLAG_C         },
     {OP(0xB, 1, 2, 0, 0x000), NO_SRC1, 0x7FFFFFFF, 0x7FFFFFFF, FLAG_C | FLAG_Z | FLAG_N, FLAG_C         },
