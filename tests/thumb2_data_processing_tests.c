@@ -1422,6 +1422,51 @@ static const struct TestInfo32 dp_shift_reg_tests[] = {
     {OP(0xE, 1,  2,  0, 1, 0, 0), 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF, FLAG_Z | FLAG_N, FLAG_C                  },
     {OP(0xE, 1,  2,  0, 1, 0, 0), 0x80000000, 0xFFFFFFFF, 0x80000001, FLAG_C | FLAG_Z, FLAG_N                  },
     {OP(0xE, 1,  2,  0, 1, 0, 0), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    // a few from everything, but with shifts
+    {OP(0x0, 1,  2,  0, 1, 0, 31), 0x00000001, 0x80000000, 0x80000000, FLAG_Z         , FLAG_N                  }, // 277
+    {OP(0x0, 1,  2,  0, 1, 3,  1), 0x00000001, 0x80000000, 0x80000000, FLAG_Z         , FLAG_C |FLAG_N          },
+    {OP(0x0, 1,  2,  0, 1, 2,  0), 0x80000000, 0xAAAAAAAA, 0xAAAAAAAA, FLAG_V | FLAG_Z, FLAG_V | FLAG_C | FLAG_N},
+    {OP(0x0, 1,  2,  0, 1, 2, 31), 0x80000000, 0xAAAAAAAA, 0xAAAAAAAA, FLAG_C | FLAG_Z, FLAG_N                  },
+
+    {OP(0x1, 1,  2,  0, 1, 0, 31), 0x00000001, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_C         , 0                       },
+    {OP(0x1, 1,  2,  0, 1, 3,  1), 0x00000001, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_N         , FLAG_C                  },
+
+    {OP(0x2, 1,  2,  0, 1, 0, 31), 0x00000001, 0x00000000, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0x2, 1,  2,  0, 1, 3,  1), 0x00000001, 0x00000000, 0x80000000, FLAG_V | FLAG_Z, FLAG_V | FLAG_C | FLAG_N},
+    {OP(0x2, 1,  2,  0, 1, 2,  0), 0x80000000, 0x55555555, 0xFFFFFFFF, FLAG_Z         , FLAG_C | FLAG_N         },
+    {OP(0x2, 1,  2,  0, 1, 2, 31), 0x80000000, 0x55555555, 0xFFFFFFFF, FLAG_C         , FLAG_N                  },
+
+    {OP(0x3, 1,  2,  0, 1, 0, 31), 0x00000001, 0x00000000, 0x7FFFFFFF, FLAG_C | FLAG_Z, 0                       },
+    {OP(0x3, 1,  2,  0, 1, 3,  1), 0x00000001, 0x00000000, 0x7FFFFFFF, FLAG_V | FLAG_Z, FLAG_V | FLAG_C         },
+
+    {OP(0x3, 1, 15,  0, 1, 0, 31), 0x00000001,    NO_SRC2, 0x7FFFFFFF, FLAG_N         , 0                       },
+    {OP(0x3, 1, 15,  0, 1, 3,  1), 0x00000001,    NO_SRC2, 0x7FFFFFFF, FLAG_N         , FLAG_C                  },
+    {OP(0x3, 1, 15,  0, 1, 2,  0), 0x80000000,    NO_SRC2, 0x00000000, FLAG_V         , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(0x3, 1, 15,  0, 1, 2, 31), 0x80000000,    NO_SRC2, 0x00000000, FLAG_C         , FLAG_Z                  },
+
+    {OP(0x4, 1,  2,  0, 1, 0, 31), 0x00000001, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_Z         , 0                       },
+    {OP(0x4, 1,  2,  0, 1, 3,  1), 0x00000001, 0xFFFFFFFF, 0x7FFFFFFF, FLAG_Z         , FLAG_C                  },
+    {OP(0x4, 1,  2,  0, 1, 2,  0), 0x80000000, 0x80000000, 0x7FFFFFFF, FLAG_V | FLAG_Z, FLAG_V | FLAG_C         },
+    {OP(0x4, 1,  2,  0, 1, 2, 31), 0x80000000, 0x80000000, 0x7FFFFFFF, FLAG_C | FLAG_Z, 0                       },
+
+    {OP(0x8, 1,  2,  0, 1, 1, 31), 0xC0000000, 0x00000000, 0x00000001, FLAG_Z | FLAG_N,                         },
+    {OP(0x8, 1,  2,  0, 1, 0, 31), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0x8, 1,  2,  0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0x8, 1,  2,  0, 1, 2,  0), 0x80000000, 0x00000001, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(0x8, 1,  2,  0, 1, 2, 31), 0x80000000, 0x00000001, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    {OP(0xD, 1,  2,  0, 1, 1, 31), 0xC0000000, 0x00000000, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0xD, 1,  2,  0, 1, 0, 31), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(0xD, 1,  2,  0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_V | FLAG_N         },
+    {OP(0xD, 1,  2,  0, 1, 2,  0), 0x80000000, 0x00000001, 0x00000002, FLAG_V | FLAG_N, 0                       },
+    {OP(0xD, 1,  2,  0, 1, 2, 31), 0x80000000, 0x00000001, 0x00000002, FLAG_V | FLAG_N, 0                       },
+
+    {OP(0xE, 1,  2,  0, 1, 1, 31), 0xC0000000, 0x7FFFFFFF, 0x80000002, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0xE, 1,  2,  0, 1, 0, 31), 0x00000001, 0x7FFFFFFF, 0x00000001, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(0xE, 1,  2,  0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0x00000001, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
+    {OP(0xE, 1,  2,  0, 1, 2,  0), 0x80000000, 0x00000001, 0xFFFFFFFE, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+    {OP(0xE, 1,  2,  0, 1, 2, 31), 0x80000000, 0x00000001, 0xFFFFFFFE, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
 };
 
 static const int num_dp_shift_reg_tests = sizeof(dp_shift_reg_tests) / sizeof(dp_shift_reg_tests[0]);
@@ -1529,6 +1574,31 @@ static const struct TestInfo32 dp_shift_reg_c_tests[] = {
     {OP(0x2, 1, 15, 0, 1, 3, 0), 0xAAAAAAAA,    NO_SRC2, 0x55555555, FLAG_V | FLAG_N, FLAG_V                  },
     {OP(0x2, 1, 15, 0, 1, 3, 0), 0x55555555,    NO_SRC2, 0xAAAAAAAA, FLAG_C | FLAG_N, FLAG_C | FLAG_N         },
     {OP(0x2, 1, 15, 0, 1, 3, 0), 0xAAAAAAAA,    NO_SRC2, 0xD5555555, FLAG_C | FLAG_N, FLAG_N                  },
+
+    // shifty
+    {OP(0xA, 1, 2, 0, 1, 1, 31), 0xC0000000, 0x00000000, 0x00000001, FLAG_Z | FLAG_N, 0                       }, // 92
+    {OP(0xA, 1, 2, 0, 1, 0, 31), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_Z         , FLAG_N                  },
+    {OP(0xA, 1, 2, 0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_Z         , FLAG_N                  },
+    {OP(0xA, 1, 2, 0, 1, 2,  0), 0x80000000, 0x00000001, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+    {OP(0xA, 1, 2, 0, 1, 2, 31), 0x80000000, 0x00000001, 0x00000000, FLAG_V | FLAG_N, FLAG_C | FLAG_Z         },
+
+    {OP(0xA, 1, 2, 0, 1, 1, 31), 0xC0000000, 0x00000000, 0x00000002, FLAG_C | FLAG_Z | FLAG_N, 0              },
+    {OP(0xA, 1, 2, 0, 1, 0, 31), 0x00000001, 0x7FFFFFFF, 0x00000000, FLAG_C | FLAG_Z         , FLAG_C | FLAG_Z},
+    {OP(0xA, 1, 2, 0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0x00000000, FLAG_C | FLAG_Z         , FLAG_C | FLAG_Z},
+    {OP(0xA, 1, 2, 0, 1, 2,  0), 0x80000000, 0x00000001, 0x00000001, FLAG_V | FLAG_C | FLAG_N, FLAG_C         },
+    {OP(0xA, 1, 2, 0, 1, 2, 31), 0x80000000, 0x00000001, 0x00000001, FLAG_V | FLAG_C | FLAG_N, FLAG_C         },
+
+    {OP(0xB, 1, 2, 0, 1, 1, 31), 0xC0000000, 0x00000000, 0xFFFFFFFF, FLAG_C | FLAG_Z         , FLAG_N         },
+    {OP(0xB, 1, 2, 0, 1, 0, 31), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_C | FLAG_Z         , FLAG_V | FLAG_N},
+    {OP(0xB, 1, 2, 0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, FLAG_C | FLAG_Z         , FLAG_V | FLAG_N},
+    {OP(0xB, 1, 2, 0, 1, 2,  0), 0x80000000, 0x00000001, 0x00000002, FLAG_V | FLAG_C | FLAG_N, 0              },
+    {OP(0xB, 1, 2, 0, 1, 2, 31), 0x80000000, 0x00000001, 0x00000002, FLAG_V | FLAG_C | FLAG_N, 0              },
+
+    {OP(0xB, 1, 2, 0, 1, 1, 31), 0xC0000000, 0x00000000, 0xFFFFFFFE,          FLAG_Z, FLAG_N                  },
+    {OP(0xB, 1, 2, 0, 1, 0, 31), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFE, FLAG_Z         , FLAG_V | FLAG_N         },
+    {OP(0xB, 1, 2, 0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0xFFFFFFFE, FLAG_Z         , FLAG_V | FLAG_N         },
+    {OP(0xB, 1, 2, 0, 1, 2,  0), 0x80000000, 0x00000001, 0x00000001, FLAG_V | FLAG_N, 0                       },
+    {OP(0xB, 1, 2, 0, 1, 2, 31), 0x80000000, 0x00000001, 0x00000001, FLAG_V | FLAG_N, 0                       },
 };
 
 #undef OP
