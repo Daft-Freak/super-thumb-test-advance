@@ -1368,7 +1368,7 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
         TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
         invalidate_icache();
 
-        uint32_t in0 = flags_for_val ? (test->psr_in | psr_save) : 0xBAD;
+        uint32_t in0 = flags_for_val ? (test->psr_in | psr_save) : 0xDAB00BAD;
 
         uint32_t out = func(in0, test->m_in, test->n_in, 0x3BAD);
 
