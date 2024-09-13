@@ -1605,6 +1605,84 @@ static const struct TestInfo32 dp_shift_reg_c_tests[] = {
 
 static const int num_dp_shift_reg_c_tests = sizeof(dp_shift_reg_c_tests) / sizeof(dp_shift_reg_c_tests[0]);
 
+// data processing, register
+// first the shifts
+#define OP(op, s, rn, rd, rm) (0xFA00F000 | op << 21 | s << 20 | rn << 16 | rd << 8 | rm)
+
+static const struct TestInfo32 dp_reg_shift_tests[] = {
+    // LSL r0 r1 r2
+    {OP(0, 1, 1, 0, 2), 0x55555555, 0x00000000, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // 0
+    {OP(0, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000000, 0xAAAAAAAA, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(0, 1, 1, 0, 2), 0x55555555, 0x00000001, 0xAAAAAAAA, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000001, 0x55555554, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(0, 1, 1, 0, 2), 0x55555555, 0x0000001F, 0x80000000, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(0, 1, 1, 0, 2), 0xAAAAAAAA, 0x0000001F, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         },
+    {OP(0, 1, 1, 0, 2), 0x55555555, 0x00000020, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         },
+    {OP(0, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000020, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  },
+    {OP(0, 1, 1, 0, 2), 0x55555555, 0x00000080, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  }, // too big
+    {OP(0, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000080, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  },
+    {OP(0, 1, 1, 0, 2), 0x55555555, 0x00000100, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  }, // only low byte is used
+    {OP(0, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000100, 0xAAAAAAAA, FLAG_Z         , FLAG_N                  },
+    {OP(0, 1, 1, 0, 2), 0x55555555, 0x80000000, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  },
+    {OP(0, 1, 1, 0, 2), 0xAAAAAAAA, 0x80000000, 0xAAAAAAAA, FLAG_Z         , FLAG_N                  },
+
+    // LSR r0 r1 r2
+    {OP(1, 1, 1, 0, 2), 0x55555555, 0x00000000, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // 14
+    {OP(1, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000000, 0xAAAAAAAA, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(1, 1, 1, 0, 2), 0x55555555, 0x00000001, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(1, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000001, 0x55555555, FLAG_C | FLAG_N, 0                       },
+    {OP(1, 1, 1, 0, 2), 0x55555555, 0x0000001F, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         },
+    {OP(1, 1, 1, 0, 2), 0xAAAAAAAA, 0x0000001F, 0x00000001, FLAG_Z | FLAG_N, 0                       },
+    {OP(1, 1, 1, 0, 2), 0x55555555, 0x00000020, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  },
+    {OP(1, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000020, 0x00000000, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_Z},
+    {OP(1, 1, 1, 0, 2), 0x55555555, 0x00000080, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  },
+    {OP(1, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000080, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  },
+    {OP(1, 1, 1, 0, 2), 0x55555555, 0x00000100, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  },
+    {OP(1, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000100, 0xAAAAAAAA, FLAG_Z         , FLAG_N                  },
+    {OP(1, 1, 1, 0, 2), 0x55555555, 0x80000000, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  },
+    {OP(1, 1, 1, 0, 2), 0xAAAAAAAA, 0x80000000, 0xAAAAAAAA, FLAG_Z         , FLAG_N                  },
+
+    // ASR r0 r1 r2
+    {OP(2, 1, 1, 0, 2), 0x55555555, 0x00000000, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // 28
+    {OP(2, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000000, 0xAAAAAAAA, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(2, 1, 1, 0, 2), 0x55555555, 0x00000001, 0x2AAAAAAA, FLAG_Z | FLAG_N, FLAG_C                  },
+    {OP(2, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000001, 0xD5555555, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(2, 1, 1, 0, 2), 0x55555555, 0x0000001F, 0x00000000, FLAG_N         , FLAG_C | FLAG_Z         },
+    {OP(2, 1, 1, 0, 2), 0xAAAAAAAA, 0x0000001F, 0xFFFFFFFF, FLAG_C | FLAG_Z, FLAG_N                  },
+    {OP(2, 1, 1, 0, 2), 0x55555555, 0x00000020, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  },
+    {OP(2, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000020, 0xFFFFFFFF, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(2, 1, 1, 0, 2), 0x55555555, 0x00000080, 0x00000000, FLAG_C | FLAG_N, FLAG_Z                  },
+    {OP(2, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000080, 0xFFFFFFFF, FLAG_Z         , FLAG_C | FLAG_N         },
+    {OP(2, 1, 1, 0, 2), 0x55555555, 0x00000100, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  },
+    {OP(2, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000100, 0xAAAAAAAA, FLAG_Z         , FLAG_N                  },
+    {OP(2, 1, 1, 0, 2), 0x55555555, 0x80000000, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  },
+    {OP(2, 1, 1, 0, 2), 0xAAAAAAAA, 0x80000000, 0xAAAAAAAA, FLAG_Z         , FLAG_N                  },
+
+    // ROR r0 r1 r2
+    {OP(3, 1, 1, 0, 2), 0x55555555, 0x00000000, 0x55555555, FLAG_Z | FLAG_N, 0                       }, // 32
+    {OP(3, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000000, 0xAAAAAAAA, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(3, 1, 1, 0, 2), 0x55555555, 0x00000001, 0xAAAAAAAA, FLAG_Z | FLAG_N, FLAG_C | FLAG_N         },
+    {OP(3, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000001, 0x55555555, FLAG_C | FLAG_N, 0                       },
+    {OP(3, 1, 1, 0, 2), 0x55555555, 0x0000001F, 0xAAAAAAAA, FLAG_Z | FLAG_N, FLAG_C | FLAG_N         },
+    {OP(3, 1, 1, 0, 2), 0xAAAAAAAA, 0x0000001F, 0x55555555, FLAG_C | FLAG_N, 0                       },
+    {OP(3, 1, 1, 0, 2), 0x55555555, 0x00000020, 0x55555555, FLAG_Z | FLAG_N, 0                       },
+    {OP(3, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000020, 0xAAAAAAAA, PSR_VCZN       , FLAG_V | FLAG_C | FLAG_N},
+    {OP(3, 1, 1, 0, 2), 0x55555555, 0x00000080, 0x55555555, FLAG_Z | FLAG_N, 0                       },
+    {OP(3, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000080, 0xAAAAAAAA, FLAG_C | FLAG_Z, FLAG_N | FLAG_C         },
+    {OP(3, 1, 1, 0, 2), 0x55555555, 0x00000100, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  },
+    {OP(3, 1, 1, 0, 2), 0xAAAAAAAA, 0x00000100, 0xAAAAAAAA, FLAG_Z         , FLAG_N                  },
+    {OP(3, 1, 1, 0, 2), 0x55555555, 0x80000000, 0x55555555, FLAG_C | FLAG_N, FLAG_C                  },
+    {OP(3, 1, 1, 0, 2), 0xAAAAAAAA, 0x80000000, 0xAAAAAAAA,          FLAG_Z, FLAG_N                  },
+    {OP(3, 1, 1, 0, 2), 0x12345678, 0x00000001, 0x091A2B3C, FLAG_Z | FLAG_N, 0                       },
+    {OP(3, 1, 1, 0, 2), 0x12345678, 0x00000004, 0x81234567, FLAG_Z         , FLAG_C | FLAG_N         },
+    {OP(3, 1, 1, 0, 2), 0x12345678, 0x00000010, 0x56781234, FLAG_Z | FLAG_N, 0                       },
+    {OP(3, 1, 1, 0, 2), 0x12345678, 0x00000020, 0x12345678, FLAG_C | FLAG_Z, 0                       },
+};
+
+#undef OP
+
+static const int num_dp_reg_shift_tests = sizeof(dp_reg_shift_tests) / sizeof(dp_reg_shift_tests[0]);
+
 bool run_thumb2_data_processing_tests(GroupCallback group_cb, FailCallback fail_cb) {
     bool ret = true;
 
@@ -1617,6 +1695,8 @@ bool run_thumb2_data_processing_tests(GroupCallback group_cb, FailCallback fail_
     ret = run_thumb2_test_list(group_cb, fail_cb, dp_shift_reg_tests, num_dp_shift_reg_tests, "dp.shreg", 0, false) && ret;
     // ADC/SBC/RRX in separate group to set C in
     ret = run_thumb2_test_list(group_cb, fail_cb, dp_shift_reg_c_tests, num_dp_shift_reg_c_tests, "dp.c.shreg", 0, true) && ret;
+
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_reg_shift_tests, num_dp_reg_shift_tests, "dp.reg.sh", 0, false) && ret;
 
     return ret;
 }
