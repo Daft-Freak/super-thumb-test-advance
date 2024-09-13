@@ -1686,17 +1686,17 @@ static const int num_dp_reg_shift_tests = sizeof(dp_reg_shift_tests) / sizeof(dp
 bool run_thumb2_data_processing_tests(GroupCallback group_cb, FailCallback fail_cb) {
     bool ret = true;
 
-    ret = run_thumb2_test_list(group_cb, fail_cb, dp_mod_imm_tests, num_dp_mod_imm_tests, "dp.modimm", 0, false) && ret;
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_mod_imm_tests, num_dp_mod_imm_tests, "dp.modimm", 0, false, true) && ret;
     // ADC/SBC in separate group to set C in
-    ret = run_thumb2_test_list(group_cb, fail_cb, dp_mod_imm_c_tests, num_dp_mod_imm_c_tests, "dp.c.modimm", 0, true) && ret;
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_mod_imm_c_tests, num_dp_mod_imm_c_tests, "dp.c.modimm", 0, true, true) && ret;
 
-    ret = run_thumb2_test_list(group_cb, fail_cb, dp_plain_imm_tests, num_dp_plain_imm_tests, "dp.plimm", 0, false) && ret;
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_plain_imm_tests, num_dp_plain_imm_tests, "dp.plimm", 0, false, true) && ret;
 
-    ret = run_thumb2_test_list(group_cb, fail_cb, dp_shift_reg_tests, num_dp_shift_reg_tests, "dp.shreg", 0, false) && ret;
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_shift_reg_tests, num_dp_shift_reg_tests, "dp.shreg", 0, false, true) && ret;
     // ADC/SBC/RRX in separate group to set C in
-    ret = run_thumb2_test_list(group_cb, fail_cb, dp_shift_reg_c_tests, num_dp_shift_reg_c_tests, "dp.c.shreg", 0, true) && ret;
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_shift_reg_c_tests, num_dp_shift_reg_c_tests, "dp.c.shreg", 0, true, true) && ret;
 
-    ret = run_thumb2_test_list(group_cb, fail_cb, dp_reg_shift_tests, num_dp_reg_shift_tests, "dp.reg.sh", 0, false) && ret;
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_reg_shift_tests, num_dp_reg_shift_tests, "dp.reg.sh", 0, false, true) && ret;
 
     return ret;
 }

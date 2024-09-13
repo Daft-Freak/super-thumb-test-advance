@@ -49,4 +49,4 @@ uint32_t get_cpsr_arm();
 
 void invalidate_icache();
 
-bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, int dest, bool flags_for_val);
+bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, int dest, bool flags_for_val, bool test_s_bit);
