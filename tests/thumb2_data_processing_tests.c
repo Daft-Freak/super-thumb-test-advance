@@ -1683,6 +1683,141 @@ static const struct TestInfo32 dp_reg_shift_tests[] = {
 
 static const int num_dp_reg_shift_tests = sizeof(dp_reg_shift_tests) / sizeof(dp_reg_shift_tests[0]);
 
+#define OP(op, op2, rn, rd, rm) (0xFA00F000 | op << 20 | rn << 16 | rd << 8 | op2 << 4 | rm)
+
+static const struct TestInfo32 dp_reg_tests[] = {
+    // SXTH r0 r1
+    {OP(0x0, 0x8, 15, 0, 1), 0x12340000, NO_SRC2, 0x00000000, 0              , 0       }, // 0
+    {OP(0x0, 0x8, 15, 0, 1), 0x89AB0000, NO_SRC2, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(0x0, 0x8, 15, 0, 1), 0x123400FF, NO_SRC2, 0x000000FF, 0              , 0       },
+    {OP(0x0, 0x8, 15, 0, 1), 0x89AB00FF, NO_SRC2, 0x000000FF, PSR_MASK       , PSR_MASK},
+    {OP(0x0, 0x8, 15, 0, 1), 0x12347FFF, NO_SRC2, 0x00007FFF, 0              , 0       },
+    {OP(0x0, 0x8, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0x00007FFF, PSR_MASK       , PSR_MASK},
+    {OP(0x0, 0x8, 15, 0, 1), 0x12348000, NO_SRC2, 0xFFFF8000, 0              , 0       },
+    {OP(0x0, 0x8, 15, 0, 1), 0x89AB8000, NO_SRC2, 0xFFFF8000, PSR_MASK       , PSR_MASK},
+    {OP(0x0, 0x9, 15, 0, 1), 0x12347FFF, NO_SRC2, 0x0000347F, 0              , 0       },
+    {OP(0x0, 0x9, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0xFFFFAB7F, PSR_MASK       , PSR_MASK},
+    {OP(0x0, 0xA, 15, 0, 1), 0x12347FFF, NO_SRC2, 0x00001234, 0              , 0       },
+    {OP(0x0, 0xA, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0xFFFF89AB, PSR_MASK       , PSR_MASK},
+    {OP(0x0, 0xB, 15, 0, 1), 0x12347FFF, NO_SRC2, 0xFFFFFF12, 0              , 0       },
+    {OP(0x0, 0xB, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0xFFFFFF89, PSR_MASK       , PSR_MASK},
+
+    // UXTH r0 r1
+    {OP(0x1, 0x8, 15, 0, 1), 0x12340000, NO_SRC2, 0x00000000, 0              , 0       }, // 14
+    {OP(0x1, 0x8, 15, 0, 1), 0x89AB0000, NO_SRC2, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(0x1, 0x8, 15, 0, 1), 0x123400FF, NO_SRC2, 0x000000FF, 0              , 0       },
+    {OP(0x1, 0x8, 15, 0, 1), 0x89AB00FF, NO_SRC2, 0x000000FF, PSR_MASK       , PSR_MASK},
+    {OP(0x1, 0x8, 15, 0, 1), 0x12347FFF, NO_SRC2, 0x00007FFF, 0              , 0       },
+    {OP(0x1, 0x8, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0x00007FFF, PSR_MASK       , PSR_MASK},
+    {OP(0x1, 0x8, 15, 0, 1), 0x12348000, NO_SRC2, 0x00008000, 0              , 0       },
+    {OP(0x1, 0x8, 15, 0, 1), 0x89AB8000, NO_SRC2, 0x00008000, PSR_MASK       , PSR_MASK},
+    {OP(0x1, 0x9, 15, 0, 1), 0x12347FFF, NO_SRC2, 0x0000347F, 0              , 0       },
+    {OP(0x1, 0x9, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0x0000AB7F, PSR_MASK       , PSR_MASK},
+    {OP(0x1, 0xA, 15, 0, 1), 0x12347FFF, NO_SRC2, 0x00001234, 0              , 0       },
+    {OP(0x1, 0xA, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0x000089AB, PSR_MASK       , PSR_MASK},
+    {OP(0x1, 0xB, 15, 0, 1), 0x12347FFF, NO_SRC2, 0x0000FF12, 0              , 0       },
+    {OP(0x1, 0xB, 15, 0, 1), 0x89AB7FFF, NO_SRC2, 0x0000FF89, PSR_MASK       , PSR_MASK},
+
+    // SXTB r0 r1
+    {OP(0x4, 0x8, 15, 0, 1), 0x12345600, NO_SRC2, 0x00000000, 0              , 0       }, // 28
+    {OP(0x4, 0x8, 15, 0, 1), 0x89ABCD00, NO_SRC2, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(0x4, 0x8, 15, 0, 1), 0x1234560F, NO_SRC2, 0x0000000F, 0              , 0       },
+    {OP(0x4, 0x8, 15, 0, 1), 0x89ABCD0F, NO_SRC2, 0x0000000F, PSR_MASK       , PSR_MASK},
+    {OP(0x4, 0x8, 15, 0, 1), 0x1234567F, NO_SRC2, 0x0000007F, 0              , 0       },
+    {OP(0x4, 0x8, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0x0000007F, PSR_MASK       , PSR_MASK},
+    {OP(0x4, 0x8, 15, 0, 1), 0x12345680, NO_SRC2, 0xFFFFFF80, 0              , 0       },
+    {OP(0x4, 0x8, 15, 0, 1), 0x89ABCD80, NO_SRC2, 0xFFFFFF80, PSR_MASK       , PSR_MASK},
+    {OP(0x4, 0x9, 15, 0, 1), 0x1234567F, NO_SRC2, 0x00000056, 0              , 0       },
+    {OP(0x4, 0x9, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0xFFFFFFCD, PSR_MASK       , PSR_MASK},
+    {OP(0x4, 0xA, 15, 0, 1), 0x1234567F, NO_SRC2, 0x00000034, 0              , 0       },
+    {OP(0x4, 0xA, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0xFFFFFFAB, PSR_MASK       , PSR_MASK},
+    {OP(0x4, 0xB, 15, 0, 1), 0x1234567F, NO_SRC2, 0x00000012, 0              , 0       },
+    {OP(0x4, 0xB, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0xFFFFFF89, PSR_MASK       , PSR_MASK},
+
+    // UXTB r0 r1
+    {OP(0x5, 0x8, 15, 0, 1), 0x12345600, NO_SRC2, 0x00000000, 0              , 0       }, // 42
+    {OP(0x5, 0x8, 15, 0, 1), 0x89ABCD00, NO_SRC2, 0x00000000, PSR_MASK       , PSR_MASK},
+    {OP(0x5, 0x8, 15, 0, 1), 0x1234560F, NO_SRC2, 0x0000000F, 0              , 0       },
+    {OP(0x5, 0x8, 15, 0, 1), 0x89ABCD0F, NO_SRC2, 0x0000000F, PSR_MASK       , PSR_MASK},
+    {OP(0x5, 0x8, 15, 0, 1), 0x1234567F, NO_SRC2, 0x0000007F, 0              , 0       },
+    {OP(0x5, 0x8, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0x0000007F, PSR_MASK       , PSR_MASK},
+    {OP(0x5, 0x8, 15, 0, 1), 0x12345680, NO_SRC2, 0x00000080, 0              , 0       },
+    {OP(0x5, 0x8, 15, 0, 1), 0x89ABCD80, NO_SRC2, 0x00000080, PSR_MASK       , PSR_MASK},
+    {OP(0x5, 0x9, 15, 0, 1), 0x1234567F, NO_SRC2, 0x00000056, 0              , 0       },
+    {OP(0x5, 0x9, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0x000000CD, PSR_MASK       , PSR_MASK},
+    {OP(0x5, 0xA, 15, 0, 1), 0x1234567F, NO_SRC2, 0x00000034, 0              , 0       },
+    {OP(0x5, 0xA, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0x000000AB, PSR_MASK       , PSR_MASK},
+    {OP(0x5, 0xB, 15, 0, 1), 0x1234567F, NO_SRC2, 0x00000012, 0              , 0       },
+    {OP(0x5, 0xB, 15, 0, 1), 0x89ABCD7F, NO_SRC2, 0x00000089, PSR_MASK       , PSR_MASK},
+
+    // REV r0 r1
+    // rm is encoded twice
+    {OP(0x9, 0x8, 1, 0, 1), 0x01234567, NO_SRC2, 0x67452301, 0              , 0       }, // 56
+    {OP(0x9, 0x8, 1, 0, 1), 0x01234567, NO_SRC2, 0x67452301, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0x8, 1, 0, 1), 0x67452301, NO_SRC2, 0x01234567, 0              , 0       },
+    {OP(0x9, 0x8, 1, 0, 1), 0x67452301, NO_SRC2, 0x01234567, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0x8, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xEFCDAB89, 0              , 0       },
+    {OP(0x9, 0x8, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xEFCDAB89, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0x8, 1, 0, 1), 0xEFCDAB89, NO_SRC2, 0x89ABCDEF, 0              , 0       },
+    {OP(0x9, 0x8, 1, 0, 1), 0xEFCDAB89, NO_SRC2, 0x89ABCDEF, PSR_MASK       , PSR_MASK},
+
+    // REV16 r0 r1
+    {OP(0x9, 0x9, 1, 0, 1), 0x01234567, NO_SRC2, 0x23016745, 0              , 0       }, // 64
+    {OP(0x9, 0x9, 1, 0, 1), 0x01234567, NO_SRC2, 0x23016745, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0x9, 1, 0, 1), 0x23016745, NO_SRC2, 0x01234567, 0              , 0       },
+    {OP(0x9, 0x9, 1, 0, 1), 0x23016745, NO_SRC2, 0x01234567, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0x9, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xAB89EFCD, 0              , 0       },
+    {OP(0x9, 0x9, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xAB89EFCD, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0x9, 1, 0, 1), 0xAB89EFCD, NO_SRC2, 0x89ABCDEF, 0              , 0       },
+    {OP(0x9, 0x9, 1, 0, 1), 0xAB89EFCD, NO_SRC2, 0x89ABCDEF, PSR_MASK       , PSR_MASK},
+
+    // RBIT r0 r1
+    {OP(0x9, 0xA, 1, 0, 1), 0x01234567, NO_SRC2, 0xE6A2C480, 0              , 0       }, // 72
+    {OP(0x9, 0xA, 1, 0, 1), 0x01234567, NO_SRC2, 0xE6A2C480, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xA, 1, 0, 1), 0xE6A2C480, NO_SRC2, 0x01234567, 0              , 0       },
+    {OP(0x9, 0xA, 1, 0, 1), 0xE6A2C480, NO_SRC2, 0x01234567, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xA, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xF7B3D591, 0              , 0       },
+    {OP(0x9, 0xA, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xF7B3D591, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xA, 1, 0, 1), 0xF7B3D591, NO_SRC2, 0x89ABCDEF, 0              , 0       },
+    {OP(0x9, 0xA, 1, 0, 1), 0xF7B3D591, NO_SRC2, 0x89ABCDEF, PSR_MASK       , PSR_MASK},
+
+    // REVSH r0 r1
+    {OP(0x9, 0xB, 1, 0, 1), 0x01234567, NO_SRC2, 0x00006745, 0              , 0       }, // 80
+    {OP(0x9, 0xB, 1, 0, 1), 0x01234567, NO_SRC2, 0x00006745, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xB, 1, 0, 1), 0x23016745, NO_SRC2, 0x00004567, 0              , 0       },
+    {OP(0x9, 0xB, 1, 0, 1), 0x23016745, NO_SRC2, 0x00004567, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xB, 1, 0, 1), 0x01236789, NO_SRC2, 0xFFFF8967, 0              , 0       },
+    {OP(0x9, 0xB, 1, 0, 1), 0x01236789, NO_SRC2, 0xFFFF8967, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xB, 1, 0, 1), 0x23018967, NO_SRC2, 0x00006789, 0              , 0       },
+    {OP(0x9, 0xB, 1, 0, 1), 0x23018967, NO_SRC2, 0x00006789, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xB, 1, 0, 1), 0x89AB0123, NO_SRC2, 0x00002301, 0              , 0       },
+    {OP(0x9, 0xB, 1, 0, 1), 0x89AB0123, NO_SRC2, 0x00002301, PSR_MASK       , PSR_MASK},
+    {OP(0x9, 0xB, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xFFFFEFCD, 0              , 0       },
+    {OP(0x9, 0xB, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0xFFFFEFCD, PSR_MASK       , PSR_MASK},
+
+    // CLZ r0 r1
+    {OP(0xB, 0x8, 1, 0, 1), 0x01234567, NO_SRC2, 0x00000007, 0              , 0       }, // 92
+    {OP(0xB, 0x8, 1, 0, 1), 0x00234567, NO_SRC2, 0x0000000A, PSR_MASK       , PSR_MASK},
+    {OP(0xB, 0x8, 1, 0, 1), 0x00034567, NO_SRC2, 0x0000000E, 0              , 0       },
+    {OP(0xB, 0x8, 1, 0, 1), 0x00004567, NO_SRC2, 0x00000011, PSR_MASK       , PSR_MASK},
+    {OP(0xB, 0x8, 1, 0, 1), 0x00000567, NO_SRC2, 0x00000015, 0              , 0       },
+    {OP(0xB, 0x8, 1, 0, 1), 0x00000067, NO_SRC2, 0x00000019, PSR_MASK       , PSR_MASK},
+    {OP(0xB, 0x8, 1, 0, 1), 0x00000007, NO_SRC2, 0x0000001D, 0              , 0       },
+    {OP(0xB, 0x8, 1, 0, 1), 0x00000000, NO_SRC2, 0x00000020, PSR_MASK       , PSR_MASK},
+    {OP(0xB, 0x8, 1, 0, 1), 0x89ABCDEF, NO_SRC2, 0x00000000, 0              , 0       },
+    {OP(0xB, 0x8, 1, 0, 1), 0x09ABCDEF, NO_SRC2, 0x00000004, PSR_MASK       , PSR_MASK},
+    {OP(0xB, 0x8, 1, 0, 1), 0x00ABCDEF, NO_SRC2, 0x00000008, 0              , 0       },
+    {OP(0xB, 0x8, 1, 0, 1), 0x000BCDEF, NO_SRC2, 0x0000000C, PSR_MASK       , PSR_MASK},
+    {OP(0xB, 0x8, 1, 0, 1), 0x0000CDEF, NO_SRC2, 0x00000010, 0              , 0       },
+    {OP(0xB, 0x8, 1, 0, 1), 0x00000DEF, NO_SRC2, 0x00000014, PSR_MASK       , PSR_MASK},
+    {OP(0xB, 0x8, 1, 0, 1), 0x000000EF, NO_SRC2, 0x00000018, 0              , 0       },
+    {OP(0xB, 0x8, 1, 0, 1), 0x0000000F, NO_SRC2, 0x0000001C, PSR_MASK       , PSR_MASK},
+};
+
+#undef OP
+
+static const int num_dp_reg_tests = sizeof(dp_reg_tests) / sizeof(dp_reg_tests[0]);
+
 bool run_thumb2_data_processing_tests(GroupCallback group_cb, FailCallback fail_cb) {
     bool ret = true;
 
@@ -1697,6 +1832,7 @@ bool run_thumb2_data_processing_tests(GroupCallback group_cb, FailCallback fail_
     ret = run_thumb2_test_list(group_cb, fail_cb, dp_shift_reg_c_tests, num_dp_shift_reg_c_tests, "dp.c.shreg", 0, true, true) && ret;
 
     ret = run_thumb2_test_list(group_cb, fail_cb, dp_reg_shift_tests, num_dp_reg_shift_tests, "dp.reg.sh", 0, false, true) && ret;
+    ret = run_thumb2_test_list(group_cb, fail_cb, dp_reg_tests, num_dp_reg_tests, "dp.reg", 0, false, false) && ret;
 
     return ret;
 }
