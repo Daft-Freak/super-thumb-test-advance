@@ -1818,6 +1818,307 @@ static const struct TestInfo32 dp_reg_tests[] = {
 
 static const int num_dp_reg_tests = sizeof(dp_reg_tests) / sizeof(dp_reg_tests[0]);
 
+// multiply
+// accum in in psr_in
+#define OP(op, op2, rn, ra, rd, rm) (0xFB000000 | op << 20 | rn << 16 | ra << 12 | rd << 8 | op2 << 4 | rm)
+
+static const struct TestInfo32 mul_tests[] = {
+    // MUL r0 r2 r1
+    {OP(0, 0, 2, 15, 0, 1), 0x00000000, 0x00000000, 0x00000000, 0x01234567, 0}, // 0
+    {OP(0, 0, 2, 15, 0, 1), 0x00000000, 0x00000001, 0x00000000, 0x01234567, 0}, // 0 * n
+    {OP(0, 0, 2, 15, 0, 1), 0x00000001, 0x00000000, 0x00000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000000, 0xFFFFFFFF, 0x00000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0xFFFFFFFF, 0x00000000, 0x00000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000001, 0x00000001, 0x00000001, 0x01234567, 0}, // 1 * n
+    {OP(0, 0, 2, 15, 0, 1), 0x00000001, 0x7FFFFFFF, 0x7FFFFFFF, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFF, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000001, 0x80000000, 0x80000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x80000000, 0x00000001, 0x80000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000001, 0xFFFFFFFF, 0xFFFFFFFF, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000002, 0x30000000, 0x60000000, 0x01234567, 0}, // 2 * n
+    {OP(0, 0, 2, 15, 0, 1), 0x30000000, 0x00000002, 0x60000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000002, 0x40000000, 0x80000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x40000000, 0x00000002, 0x80000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000002, 0x7FFFFFFF, 0xFFFFFFFE, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x7FFFFFFF, 0x00000002, 0xFFFFFFFE, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000002, 0x80000000, 0x00000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x80000000, 0x00000002, 0x00000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000002, 0xFFFFFFFF, 0xFFFFFFFE, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0xFFFFFFFF, 0x00000002, 0xFFFFFFFE, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x00000003, 0x30000000, 0x90000000, 0x01234567, 0}, // 3 * n
+    {OP(0, 0, 2, 15, 0, 1), 0x30000000, 0x00000003, 0x90000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0xFFFFFFFF, 0x7FFFFFFF, 0x80000001, 0x01234567, 0}, // -1 * n
+    {OP(0, 0, 2, 15, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000001, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0xFFFFFFFF, 0x80000000, 0x80000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000001, 0x01234567, 0},
+    {OP(0, 0, 2, 15, 0, 1), 0x01234567, 0x89ABCDEF, 0xC94E4629, 0x01234567, 0}, // extras
+    {OP(0, 0, 2, 15, 0, 1), 0x89ABCDEF, 0x01234567, 0xC94E4629, 0x01234567, 0},
+
+    // MLA r0 r2 r3
+    {OP(0, 0, 2,  3, 0, 1), 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0}, // 31
+    {OP(0, 0, 2,  3, 0, 1), 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0}, // 0 * n
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x80000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x00000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x80000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x00000001, 0x00000000, 0}, // 1 * n
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x00000002, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x80000000, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x80000001, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x00000000, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x7FFFFFFF, 0x7FFFFFFF, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFF, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x80000000, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0xFFFFFFFE, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0xFFFFFFFF, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x7FFFFFFE, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0x80000000, 0x80000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x80000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x80000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000001, 0xFFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x00000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000001, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x00000000, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x7FFFFFFE, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x7FFFFFFF, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0xFFFFFFFE, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000002, 0x30000000, 0x60000000, 0x00000000, 0}, // 2 * n
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000002, 0x60000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000002, 0x60000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000002, 0xDFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000002, 0xE0000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000002, 0x5FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000002, 0x40000000, 0x80000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x80000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x80000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x40000000, 0x00000002, 0xFFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x00000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x7FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000002, 0x7FFFFFFF, 0xFFFFFFFE, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0xFFFFFFFE, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0xFFFFFFFF, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0x7FFFFFFD, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0x7FFFFFFE, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0xFFFFFFFD, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000002, 0x80000000, 0x00000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x00000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x00000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x7FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x80000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0x00000002, 0xFFFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000002, 0xFFFFFFFF, 0xFFFFFFFE, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0xFFFFFFFE, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0xFFFFFFFF, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0x7FFFFFFD, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0x7FFFFFFE, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0xFFFFFFFD, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x00000003, 0x30000000, 0x90000000, 0x00000000, 0}, // 3 * n
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x90000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x90000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x0FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x10000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x8FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x7FFFFFFF, 0x80000001, 0x00000000, 0}, // -1 * n
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000001, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000002, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x00000000, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x00000001, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000000, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0x80000000, 0x80000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x80000001, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x00000000, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000001, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000002, 0x00000001, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x80000001, 0x80000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x01234567, 0x89ABCDEF, 0xC94E4629, 0x00000000, 0}, // extras
+    {OP(0, 0, 2,  3, 0, 1), 0x89ABCDEF, 0x01234567, 0xC94E4629, 0x00000000, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x89ABCDEF, 0x01234567, 0x3FA27839, 0x76543210, 0},
+    {OP(0, 0, 2,  3, 0, 1), 0x89ABCDEF, 0x01234567, 0xC82B00C1, 0xFEDCBA98, 0},
+
+    // MLS r0 r2 r3
+    {OP(0, 1, 2,  3, 0, 1), 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0}, // 124
+    {OP(0, 1, 2,  3, 0, 1), 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0}, // 0 * n
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000000, 0x80000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000000, 0xFFFFFFFF, 0x00000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x00000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x7FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0x80000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0},
+
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000001, 0xFFFFFFFF, 0x00000000, 0}, // 1 * n
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x00000000, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x7FFFFFFE, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000001, 0x7FFFFFFF, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x00000001, 0xFFFFFFFE, 0xFFFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x7FFFFFFF, 0x80000001, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x80000001, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x80000002, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x00000000, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x00000001, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000001, 0x80000000, 0xFFFFFFFF, 0}, // 147 -
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0x80000000, 0x80000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x80000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x80000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000001, 0xFFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x00000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000001, 0x7FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000001, 0xFFFFFFFF, 0x00000001, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x00000001, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x00000002, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x80000000, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x80000001, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000001, 0x00000000, 0xFFFFFFFF, 0},
+
+    {OP(0, 1, 2,  3, 0, 1), 0x00000002, 0x30000000, 0xA0000000, 0x00000000, 0}, // 2 * n
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000002, 0xA0000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000002, 0xA0000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000002, 0x1FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000002, 0x20000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000002, 0x9FFFFFFF, 0xFFFFFFFF, 0}, // 165 -
+    {OP(0, 1, 2,  3, 0, 1), 0x00000002, 0x40000000, 0x80000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x80000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x80000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x40000000, 0x00000002, 0xFFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x00000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x40000000, 0x00000002, 0x7FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000002, 0x7FFFFFFF, 0x00000002, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0x00000002, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0x00000003, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0x80000001, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0x80000002, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0x00000002, 0x00000001, 0xFFFFFFFF, 0}, // 177 -
+    {OP(0, 1, 2,  3, 0, 1), 0x00000002, 0x80000000, 0x00000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x00000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x00000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x7FFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000002, 0x80000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0x00000002, 0xFFFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x00000002, 0xFFFFFFFF, 0x00000002, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0x00000002, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0x00000003, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0x80000001, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0x80000002, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x00000002, 0x00000001, 0xFFFFFFFF, 0},
+
+    {OP(0, 1, 2,  3, 0, 1), 0x00000003, 0x30000000, 0x70000000, 0x00000000, 0}, // 3 * n
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x70000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x70000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000003, 0xEFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000003, 0xF0000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x30000000, 0x00000003, 0x6FFFFFFF, 0xFFFFFFFF, 0},
+
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0x00000000, 0}, // -1 * n
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x80000000, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x7FFFFFFF, 0xFFFFFFFF, 0x7FFFFFFE, 0xFFFFFFFF, 0}, // 201 -
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0x80000000, 0x80000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x80000000, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x80000001, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x00000000, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x80000000, 0xFFFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x00000000, 0x00000001, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFE, 0x7FFFFFFF, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF, 0x80000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFE, 0xFFFFFFFF, 0},
+
+    {OP(0, 1, 2,  3, 0, 1), 0x01234567, 0x89ABCDEF, 0x36B1B9D7, 0x00000000, 0}, // extras
+    {OP(0, 1, 2,  3, 0, 1), 0x89ABCDEF, 0x01234567, 0x36B1B9D7, 0x00000000, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x89ABCDEF, 0x01234567, 0xAD05EBE7, 0x76543210, 0},
+    {OP(0, 1, 2,  3, 0, 1), 0x89ABCDEF, 0x01234567, 0x358E746F, 0xFEDCBA98, 0},
+};
+
+#undef OP
+
+static const int num_mul_tests = sizeof(mul_tests) / sizeof(mul_tests[0]);
+
+// these set no flags and may have three sources
+static bool run_thumb2_mul_div_tests(GroupCallback group_cb, FailCallback fail_cb, const struct TestInfo32 *tests, int num_tests, const char *label, int dest) {
+
+    bool res = true;
+
+    group_cb(label);
+
+    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
+
+    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
+
+    for(int i = 0; i < num_tests; i++) {
+        const struct TestInfo32 *test = &tests[i];
+
+        // value test
+        uint16_t *ptr = code_buf;
+
+        *ptr++ = test->opcode >> 16;
+        *ptr++ = test->opcode;
+
+        if(dest != 0) // assume < 8
+            *ptr++ = dest << 3; // mov r0 rN
+        
+        *ptr++ = 0x4770; // BX LR
+
+        TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+        invalidate_icache();
+
+        // psr_in used as accum in
+        uint32_t out = func(0xDAB00BAD, test->m_in, test->n_in, test->psr_in);
+
+        if(out != test->d_out) {
+            res = false;
+            fail_cb(i, out, test->d_out);
+        }
+
+
+        // flags test (make sure flags are unmodified)
+        // this relies on the PSR helpers not affecting anything other than R0
+        code_buf[0] = 0xB500; // push lr
+        code_buf[1] = 0xF000 | ((set_cpsr_off >> 12) & 0x7FF); // bl set_cpsr
+        code_buf[2] = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
+
+        code_buf[3] = test->opcode >> 16;
+        code_buf[4] = test->opcode;
+
+        code_buf[5] = 0xBC01; // pop r0
+        code_buf[6] = 0x4686; // mov lr r0
+        code_buf[7] = 0x4718; // bx r3
+
+        invalidate_icache();
+        out = func(PSR_VCZN | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
+        out &= PSR_MASK;
+
+        if(out != PSR_VCZN) {
+            res = false;
+            fail_cb(i, out, PSR_VCZN);
+        }
+    }
+
+    return res;
+}
+
 bool run_thumb2_data_processing_tests(GroupCallback group_cb, FailCallback fail_cb) {
     bool ret = true;
 
@@ -1833,6 +2134,8 @@ bool run_thumb2_data_processing_tests(GroupCallback group_cb, FailCallback fail_
 
     ret = run_thumb2_test_list(group_cb, fail_cb, dp_reg_shift_tests, num_dp_reg_shift_tests, "dp.reg.sh", 0, false, true) && ret;
     ret = run_thumb2_test_list(group_cb, fail_cb, dp_reg_tests, num_dp_reg_tests, "dp.reg", 0, false, false) && ret;
+
+    ret = run_thumb2_mul_div_tests(group_cb, fail_cb, mul_tests, num_mul_tests, "mul", 0) && ret;
 
     return ret;
 }
