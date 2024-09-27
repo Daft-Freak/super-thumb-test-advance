@@ -2063,10 +2063,6 @@ static bool run_thumb2_mul_div_tests(GroupCallback group_cb, FailCallback fail_c
 
     group_cb(label);
 
-    uint32_t psr_save = get_cpsr_arm() & ~PSR_MASK;
-
-    int set_cpsr_off = (uintptr_t)set_cpsr - ((uintptr_t)code_buf + 6);
-
     for(int i = 0; i < num_tests; i++) {
         const struct TestInfo32 *test = &tests[i];
 
@@ -2092,22 +2088,20 @@ static bool run_thumb2_mul_div_tests(GroupCallback group_cb, FailCallback fail_c
             fail_cb(i, out, test->d_out);
         }
 
-
         // flags test (make sure flags are unmodified)
-        // this relies on the PSR helpers not affecting anything other than R0
-        code_buf[0] = 0xB500; // push lr
-        code_buf[1] = 0xF000 | ((set_cpsr_off >> 12) & 0x7FF); // bl set_cpsr
-        code_buf[2] = 0xF800 | ((set_cpsr_off >> 1) & 0x7FF); // bl set_cpsr
+        code_buf[0] = SET_PSR_OP(0) >> 16;
+        code_buf[1] = SET_PSR_OP(0) & 0xFFFF;
 
-        code_buf[3] = test->opcode >> 16;
-        code_buf[4] = test->opcode;
+        code_buf[2] = test->opcode >> 16;
+        code_buf[3] = test->opcode;
 
-        code_buf[5] = 0xBC01; // pop r0
-        code_buf[6] = 0x4686; // mov lr r0
-        code_buf[7] = 0x4718; // bx r3
+        code_buf[4] = GET_PSR_OP(0) >> 16;
+        code_buf[5] = GET_PSR_OP(0) & 0xFFFF;
+
+        code_buf[6] = 0x4770; // BX LR
 
         invalidate_icache();
-        out = func(PSR_VCZN | psr_save, test->m_in, test->n_in, (intptr_t)get_cpsr_arm);
+        out = func(PSR_VCZN, test->m_in, test->n_in, test->psr_in);
         out &= PSR_MASK;
 
         if(out != PSR_VCZN) {

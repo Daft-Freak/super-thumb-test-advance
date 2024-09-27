@@ -44,8 +44,13 @@ typedef uint32_t (*TestFunc)(uint32_t, uint32_t, uint32_t, uint32_t);
 
 extern uint16_t code_buf[32];
 
+// helpers for accessing flags (not possible from thumb on v4)
 void set_cpsr(uint32_t v);
 uint32_t get_cpsr_arm();
+
+// Thumb2 opcodes to access flags directly
+#define GET_PSR_OP(d) (0xF3EF8000 | d << 8)
+#define SET_PSR_OP(n) (0xF3808800 | n << 16)
 
 void invalidate_icache();
 
