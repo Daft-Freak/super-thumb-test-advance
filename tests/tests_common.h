@@ -41,6 +41,7 @@ struct TestInfo32 {
 };
 
 typedef uint32_t (*TestFunc)(uint32_t, uint32_t, uint32_t, uint32_t);
+typedef uint64_t (*TestFunc64)(uint32_t, uint32_t, uint32_t, uint32_t);
 
 extern uint16_t code_buf[32];
 
