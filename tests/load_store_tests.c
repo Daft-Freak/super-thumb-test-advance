@@ -1701,7 +1701,7 @@ bool run_ldm_stm_tests(GroupCallback group_cb, FailCallback fail_cb, const char 
         uint32_t out = func(values[0], values[1], values[2], values[3]);
 
 #if __ARM_ARCH == 6
-        uint32_t expected = spIn - 20; // always overwrites
+        uint32_t expected = spIn - 20; // never overwrites
 #else
         uint32_t expected = j == 0 ? spIn - 20 : spIn - 4; // overwrites if not first reg
 #endif
