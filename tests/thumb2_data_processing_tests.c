@@ -1674,6 +1674,40 @@ static const struct TestInfo32 dp_shift_reg_tests[] = {
     {OP(0xE, 1,  2,  0, 1, 3,  1), 0x00000001, 0x7FFFFFFF, 0x00000001, FLAG_Z | FLAG_N, FLAG_V | FLAG_C         },
     {OP(0xE, 1,  2,  0, 1, 2,  0), 0x80000000, 0x00000001, 0xFFFFFFFE, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
     {OP(0xE, 1,  2,  0, 1, 2, 31), 0x80000000, 0x00000001, 0xFFFFFFFE, FLAG_V | FLAG_Z, FLAG_C | FLAG_N         },
+
+#ifdef __ARM_FEATURE_DSP
+    // PKHBT r0 r2 r1, LSR #imm
+    {OP(0x6, 0,  2, 0, 1, 0,  0), 0x01234567, 0xFEDCBA98, 0x0123BA98, 0              , 0                       }, // 312
+    {OP(0x6, 0,  2, 0, 1, 0,  0), 0x89ABCDEF, 0x76543210, 0x89AB3210, PSR_VCZN       , PSR_VCZN                },
+    {OP(0x6, 0,  2, 0, 1, 0,  1), 0x01234567, 0xFEDCBA98, 0x0246BA98, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0,  1), 0x89ABCDEF, 0x76543210, 0x13573210, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0,  3), 0x01234567, 0xFEDCBA98, 0x091ABA98, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0,  3), 0x89ABCDEF, 0x76543210, 0x4D5E3210, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0,  7), 0x01234567, 0xFEDCBA98, 0x91A2BA98, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0,  7), 0x89ABCDEF, 0x76543210, 0xD5E63210, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0, 15), 0x01234567, 0xFEDCBA98, 0xA2B3BA98, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0, 15), 0x89ABCDEF, 0x76543210, 0xE6F73210, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0, 30), 0x01234567, 0xFEDCBA98, 0xC000BA98, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0, 30), 0x89ABCDEF, 0x76543210, 0xC0003210, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0, 31), 0x01234567, 0xFEDCBA98, 0x8000BA98, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 0, 31), 0x89ABCDEF, 0x76543210, 0x80003210, 0              , 0                       },
+
+    // PKHTB r0 r2 r1, ASR #imm
+    {OP(0x6, 0,  2, 0, 1, 2,  0), 0x01234567, 0xFEDCBA98, 0xFEDC0000, 0              , 0                       }, // 326
+    {OP(0x6, 0,  2, 0, 1, 2,  0), 0x89ABCDEF, 0x76543210, 0x7654FFFF, PSR_VCZN       , PSR_VCZN                },
+    {OP(0x6, 0,  2, 0, 1, 2,  1), 0x01234567, 0xFEDCBA98, 0xFEDCA2B3, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2,  1), 0x89ABCDEF, 0x76543210, 0x7654E6F7, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2,  3), 0x01234567, 0xFEDCBA98, 0xFEDC68AC, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2,  3), 0x89ABCDEF, 0x76543210, 0x765479BD, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2,  7), 0x01234567, 0xFEDCBA98, 0xFEDC468A, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2,  7), 0x89ABCDEF, 0x76543210, 0x7654579B, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2, 15), 0x01234567, 0xFEDCBA98, 0xFEDC0246, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2, 15), 0x89ABCDEF, 0x76543210, 0x76541357, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2, 30), 0x01234567, 0xFEDCBA98, 0xFEDC0000, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2, 30), 0x89ABCDEF, 0x76543210, 0x7654FFFE, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2, 31), 0x01234567, 0xFEDCBA98, 0xFEDC0000, 0              , 0                       },
+    {OP(0x6, 0,  2, 0, 1, 2, 31), 0x89ABCDEF, 0x76543210, 0x7654FFFF, 0              , 0                       },
+#endif
 };
 
 static const int num_dp_shift_reg_tests = sizeof(dp_shift_reg_tests) / sizeof(dp_shift_reg_tests[0]);
