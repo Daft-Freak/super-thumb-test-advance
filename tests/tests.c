@@ -1456,6 +1456,177 @@ bool run_thumb2_test_list(GroupCallback group_cb, FailCallback fail_cb, const st
 
     return res;
 }
+
+bool run_if_then_tests(GroupCallback group_cb, FailCallback fail_cb) {
+    group_cb("it");
+
+    #define IT_OP(cond, mask)       (0xBF00 | cond << 4 | mask)
+
+    #define SHIFT_OP(op, imm, m, d) (op << 11 | imm << 6 | m << 3 | d)
+    #define MN_OP(op, m, n, d)      (0x1800 | op << 9 | m << 6 | n << 3 | d)
+    #define IMM3_OP(op, imm, n, d)  (0x1C00 | op << 9 | imm << 6 | n << 3 | d)
+    #define IMM8_OP(op, imm, dn)    (0x2000 | op << 11 | dn << 8 | imm)
+    #define DP_OP(op, m, dn)        (0x4000 | op << 6 | m << 3 | dn)
+
+    bool res = true;
+    int i = 0;
+    TestFunc func = (TestFunc)((uintptr_t)code_buf | 1);
+
+    // basic test (0-1)
+    uint16_t *ptr = code_buf;
+    *ptr++ = SET_PSR_OP(0) >> 16;
+    *ptr++ = SET_PSR_OP(0) & 0xFFFF;
+
+    *ptr++ = IT_OP(0/*EQ*/, 3 << 2); // ITE EQ
+    *ptr++ = IMM8_OP(0, 1, 0); // MOV R0, 1 (EQ)
+    *ptr++ = IMM8_OP(0, 2, 0); // MOV R0, 2 (NE)
+    *ptr++ = 0x4770; // BX LR
+
+    invalidate_icache();
+
+    // equal
+    uint32_t out = func(FLAG_Z, 0x1BAD, 0x2BAD, 0x3BAD);
+
+    if(out != 1) {
+        res = false;
+        fail_cb(i, out, 1);
+    }
+
+    i++;
+
+    // not equal
+    out = func(FLAG_C, 0x1BAD, 0x2BAD, 0x3BAD);
+
+    if(out != 2) {
+        res = false;
+        fail_cb(i, out, 2);
+    }
+
+    i++;
+
+    // make sure that 16-bit ops that would set flags don't do that inside IT (2-49)
+
+    static const uint16_t no_flag_ops[] = {
+        SHIFT_OP(0, 0, 1, 0),  // MOV R0, R1
+        SHIFT_OP(0, 4, 1, 0),  // LSL R0, R1, #4
+        SHIFT_OP(1, 4, 1, 0),  // LSR R0, R1, #4
+        SHIFT_OP(2, 4, 1, 0),  // ASR R0, R1, #4
+        MN_OP(0, 1, 2, 0),     // ADD R0, R2, R1
+        MN_OP(1, 1, 2, 0),     // SUB R0, R2, R1
+        IMM3_OP(0, 0, 1, 0),   // ADD R0, R1, #0
+        IMM3_OP(1, 0, 1, 0),   // SUB R0, R1, #0
+        IMM8_OP(0, 0, 0),      // MOV R0, #0
+        IMM8_OP(2, 0, 0),      // ADD R0, #0
+        IMM8_OP(3, 0, 0),      // SUB R0, #0
+        DP_OP(0x0, 1, 0),      // AND R0, R1
+        DP_OP(0x1, 1, 0),      // EOR R0, R1
+        DP_OP(0x2, 1, 0),      // LSL R0, R1
+        DP_OP(0x3, 1, 0),      // LSR R0, R1
+        DP_OP(0x4, 1, 0),      // ASR R0, R1
+        DP_OP(0x5, 1, 0),      // ADC R0, R1
+        DP_OP(0x6, 1, 0),      // SBC R0, R1
+        DP_OP(0x7, 1, 0),      // ROR R0, R1
+        DP_OP(0x9, 1, 0),      // RSB R0, R1
+        DP_OP(0xC, 1, 0),      // ORR R0, R1
+        DP_OP(0xD, 1, 0),      // MUL R0, R1
+        DP_OP(0xE, 1, 0),      // BIC R0, R1
+        DP_OP(0xF, 1, 0),      // MVN R0, R1
+    };
+
+    for(int j = 0; j < sizeof(no_flag_ops) / sizeof(no_flag_ops[0]); j++) {
+        ptr = code_buf;
+        // setup PSR
+        *ptr++ = SET_PSR_OP(0) >> 16;
+        *ptr++ = SET_PSR_OP(0) & 0xFFFF;
+
+        // conditionally exec op
+        *ptr++ = IT_OP(1/*NE*/, 1 << 3); // IT NE
+        *ptr++ = no_flag_ops[j];
+
+        *ptr++ = GET_PSR_OP(0) >> 16;
+        *ptr++ = GET_PSR_OP(0) & 0xFFFF;
+        *ptr++ = 0x4770; // BX LR
+
+        invalidate_icache();
+
+        uint32_t out = func(FLAG_C, 0, 0, 0x3BAD);
+        out &= PSR_MASK;
+        uint32_t expected = FLAG_C;
+
+        if(out != expected) {
+            res = false;
+            fail_cb(i, out, expected);
+        }
+
+        i++;
+
+        // also test with always cond
+        ptr[2] = IT_OP(0xE/*AL*/, 1 << 3); // IT AL
+
+        invalidate_icache();
+    
+        out = func(PSR_VCZN, 0, 0, 0x3BAD);
+        out &= PSR_MASK;
+        expected = PSR_VCZN;
+
+        if(out != expected) {
+            res = false;
+            fail_cb(i, out, expected);
+        }
+
+        i++;
+    }
+
+    // test that compares still set flags (50-53)
+    static const uint16_t flag_ops[] = {
+        IMM8_OP(1, 0, 1),      // CMP R1, #0
+        DP_OP(0x8, 1, 2),      // TST R2, R1
+        DP_OP(0xA, 1, 2),      // CMP R2, R1
+        DP_OP(0xB, 1, 2),      // CMN R2, R1
+    };
+    static const uint32_t flag_op_expected[] = {
+        FLAG_C | FLAG_Z,
+        FLAG_Z,
+        FLAG_C | FLAG_Z,
+        FLAG_Z,
+    };
+    
+    for(int j = 0; j < sizeof(flag_ops) / sizeof(flag_ops[0]); j++) {
+        ptr = code_buf;
+        // setup PSR
+        *ptr++ = SET_PSR_OP(0) >> 16;
+        *ptr++ = SET_PSR_OP(0) & 0xFFFF;
+
+        // conditionally exec op
+        *ptr++ = IT_OP(1/*NE*/, 1 << 3); // IT NE
+        *ptr++ = flag_ops[j];
+
+        *ptr++ = GET_PSR_OP(0) >> 16;
+        *ptr++ = GET_PSR_OP(0) & 0xFFFF;
+        *ptr++ = 0x4770; // BX LR
+
+        invalidate_icache();
+
+        uint32_t out = func(FLAG_N, 0, 0, 0x3BAD);
+        out &= PSR_MASK;
+
+        if(out != flag_op_expected[j]) {
+            res = false;
+            fail_cb(i, out, flag_op_expected[j]);
+        }
+
+        i++;
+    }
+
+    #undef IT_OP
+    #undef SHIFT_OP
+    #undef MN_OP
+    #undef IMM3_OP
+    #undef IMM8_OP
+    #undef DP_OP
+
+    return res;
+}
 #endif
 
 bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
@@ -1480,6 +1651,7 @@ bool run_tests(GroupCallback group_cb, FailCallback fail_cb) {
 #if __ARM_ARCH >= 7
     ret = run_ldm_stm_thumb2_tests(group_cb, fail_cb, "ldmstm.t2") && ret;
     ret = run_thumb2_data_processing_tests(group_cb, fail_cb) && ret;
+    ret = run_if_then_tests(group_cb, fail_cb) && ret;
 #endif
 
     return ret;
